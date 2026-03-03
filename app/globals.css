@@ -1,26 +1,234 @@
+/* ────────────────────────────────────────────────
+   Imports
+──────────────────────────────────────────────── */
+
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ────────────────────────────────────────────────
+   Design Tokens
+──────────────────────────────────────────────── */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	/* Core surfaces */
+	--bg: #08080f;
+	--surface: #0d0d18;
+	--card: #111120;
+	--card-hover: #151528;
+	--border: #1c1c30;
+	--border-active: #2d2d50;
+	--dim: #1a1a2e;
+
+	/* Text */
+	--text: #dde0f0;
+	--muted: #52527a;
+	--muted-fg: #6b6b9a;
+
+	/* Stage colors */
+	--score: #3d9eff;
+	--script: #a855f7;
+	--prod: #f97316;
+	--review: #eab308;
+	--publish: #22c55e;
+	--danger: #ef4444;
+
+	/* Typography */
+	--font-mono: var(--font-mono);
+	--font-display: var(--font-display);
+
+	/* Radius */
+	--radius: 8px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-card: var(--card);
+	--color-card-hover: var(--card-hover);
+	--color-border: var(--border);
+	--color-border-active: var(--border-active);
+	--color-dim: var(--dim);
+
+	--color-text: var(--text);
+	--color-muted: var(--muted);
+	--color-muted-fg: var(--muted-fg);
+
+	--color-score: var(--score);
+	--color-script: var(--script);
+	--color-prod: var(--prod);
+	--color-review: var(--review);
+	--color-publish: var(--publish);
+	--color-danger: var(--danger);
+
+	--font-mono: var(--font-mono);
+	--font-display: var(--font-display);
+
+	--radius: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ────────────────────────────────────────────────
+   Base Layer
+──────────────────────────────────────────────── */
+
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	body {
+		background: var(--bg);
+		color: var(--text);
+		font-family: var(--font-mono);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+
+	/* Scrollbar */
+	::-webkit-scrollbar {
+		width: 3px;
+		height: 3px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: var(--bg);
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--dim);
+		border-radius: 2px;
+	}
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ────────────────────────────────────────────────
+   Components Layer (Custom UI Overrides)
+──────────────────────────────────────────────── */
+
+@layer components {
+	/* Score Ring (SVG text styling) */
+	.score-ring text {
+		font-family: var(--font-display);
+		font-weight: 800;
+	}
+
+	/* Score Bar */
+	.score-track {
+		height: 3px;
+		background: var(--dim);
+		border-radius: 2px;
+		overflow: hidden;
+	}
+
+	.score-fill {
+		height: 100%;
+		border-radius: 2px;
+		transition: width 0.5s ease;
+	}
+
+	/* Script block */
+	.script-pre {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		white-space: pre-wrap;
+		line-height: 1.7;
+		margin: 0;
+		color: var(--text);
+	}
+
+	/* ─── Shadcn Tabs (Dark Override) ─── */
+
+	[role="tablist"] {
+		background: var(--surface) !important;
+		border: 1px solid var(--border) !important;
+		border-radius: var(--radius) !important;
+		padding: 3px !important;
+		gap: 2px !important;
+	}
+
+	[role="tab"] {
+		font-family: var(--font-mono) !important;
+		font-size: 13px !important;
+		letter-spacing: 0.06em !important;
+		color: var(--muted) !important;
+		border-radius: calc(var(--radius) - 2px) !important;
+		padding: 5px 14px !important;
+		transition: all 0.15s !important;
+		display: flex !important;
+		align-items: center !important;
+		gap: 6px !important;
+	}
+
+	[role="tab"][data-state="active"] {
+		color: var(--text) !important;
+		background: var(--card) !important;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+	}
+
+	/* ─── Radix Select (Dark Override) ─── */
+
+	[data-radix-select-content] {
+		background: var(--card) !important;
+		border: 1px solid var(--border) !important;
+		border-radius: var(--radius) !important;
+		font-family: var(--font-mono) !important;
+		font-size: 12px !important;
+		z-index: 50;
+	}
+
+	[data-radix-select-item] {
+		color: var(--muted-fg) !important;
+		padding: 6px 12px !important;
+		cursor: pointer !important;
+		font-size: 11px !important;
+	}
+
+	[data-radix-select-item]:hover,
+	[data-radix-select-item][data-highlighted] {
+		background: var(--dim) !important;
+		color: var(--text) !important;
+		outline: none !important;
+	}
+}
+
+/* ────────────────────────────────────────────────
+   Utilities Layer
+──────────────────────────────────────────────── */
+
+@layer utilities {
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes pulse-slow {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.25s ease;
+	}
+
+	.animate-pulse-slow {
+		animation: pulse-slow 1.2s infinite;
+	}
 }
