@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { runFullDiscovery, DEFAULT_QUERIES } from "@/lib/youtube-scraper";
 import { batchScore } from "@/lib/ai";
-import { upsertIdea, startScrapeRun, endScrapeRun } from "@/lib/supabase";
+import {
+	upsertIdea,
+	startScrapeRun,
+	endScrapeRun,
+	updateIdea,
+} from "@/lib/supabase";
 import type { ActionResult, DiscoverResult, Idea } from "@/types";
 
 export async function discoverIdeas(
@@ -18,30 +23,54 @@ export async function discoverIdeas(
 	const run = await startScrapeRun(queries.slice(0, 5));
 
 	try {
+		// 1. Scrape raw ideas
 		const raw = await runFullDiscovery(queries, { minViews, perQuery: 1 });
-		const scored = await batchScore(raw);
-		console.log(scored);
 
+		// 2. Save to DB to get IDs for scoring
+		const savedRecords: Idea[] = [];
 		let newCount = 0;
-		const saved = [];
-		for (const idea of scored) {
+
+		for (const idea of raw) {
 			if (!idea.content_hash) continue;
+
 			const record = await upsertIdea({
 				...idea,
 				content_hash: idea.content_hash,
-				status: "scored",
+				status: "discovered", // not scored yet
 			} as Partial<Idea> & { content_hash: string });
-			saved.push(record);
+
+			savedRecords.push(record);
+
 			if (Date.now() - new Date(record.created_at).getTime() < 60_000)
 				newCount++;
 		}
 
+		// 3. Now batch score using DB IDs
+		const scored = await batchScore(savedRecords);
+
+		// 4. Update DB with scores
+		const updated: Idea[] = [];
+
+		for (const idea of scored) {
+			const record = await updateIdea(idea.id!, {
+				viral_score: Math.round(idea.viral_score),
+				hook_score: Math.round(idea.hook_score),
+				trend_score: Math.round(idea.trend_score),
+				competition_score: Math.round(idea.competition_score),
+				status: "scored",
+			});
+
+			updated.push(record);
+		}
+
 		const duration_ms = Date.now() - t0;
+
 		await endScrapeRun(run.id, {
 			ideas_found: raw.length,
 			ideas_new: newCount,
 			duration_ms,
 		});
+
 		revalidatePath("/dashboard");
 
 		return {
@@ -50,12 +79,16 @@ export async function discoverIdeas(
 				run_id: run.id,
 				found: raw.length,
 				new_ideas: newCount,
-				ideas: saved,
+				ideas: updated,
 				duration_ms,
 			},
 		};
 	} catch (err) {
-		const error = err instanceof Error ? err.message : String(err);
+		console.error("FULL ERROR:", err);
+
+		const error =
+			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
+
 		await endScrapeRun(run.id, {
 			ideas_found: 0,
 			ideas_new: 0,
@@ -63,6 +96,7 @@ export async function discoverIdeas(
 			status: "failed",
 			error_msg: error,
 		});
+
 		return { ok: false, error };
 	}
 }

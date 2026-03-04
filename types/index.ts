@@ -164,12 +164,6 @@ export interface ScoreResult {
 	hook_score: number;
 	trend_score: number;
 	competition_score: number;
-	ai_reasoning: string;
-	niche: NicheType;
-	seo_title: string;
-	seo_description: string;
-	seo_tags: string[];
-	seo_hashtags: string[];
 }
 
 export interface ScriptResult {
