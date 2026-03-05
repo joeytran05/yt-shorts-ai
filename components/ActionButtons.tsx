@@ -43,7 +43,7 @@ const ActionButtons = ({
 	const [scheduleTime, setScheduleTime] = useState("");
 
 	const run = (
-		fn: () => Promise<{ ok: boolean; error?: string; data?: any }>,
+		fn: () => Promise<{ ok: boolean; error?: string; data?: unknown }>,
 	) =>
 		startTransition(async () => {
 			const result = await fn();

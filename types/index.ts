@@ -172,6 +172,12 @@ export interface ScriptResult {
 	script_cta: string;
 	script_full: string;
 	script_duration_sec: number;
+
+	seo_title: string;
+	seo_description: string;
+	seo_tags: string[];
+
+	niche: NicheType;
 	music_suggestion: string;
 }
 

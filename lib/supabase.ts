@@ -79,6 +79,17 @@ export async function updateIdea(
 	return data as Idea;
 }
 
+export async function setStatus(
+	id: string,
+	status: IdeaStatus,
+	extra?: Partial<Idea>,
+): Promise<void> {
+	const patch: Partial<Idea> = { status, ...extra };
+	if (status === "approved") patch.approved_at = new Date().toISOString();
+	if (status === "published") patch.published_at = new Date().toISOString();
+	await db.from("ideas").update(patch).eq("id", id);
+}
+
 // ── PIPELINE COUNTS ──────────────────────────────────────────────
 
 export async function getPipelineCounts(): Promise<PipelineCount[]> {

@@ -24,8 +24,29 @@ const ScriptSchema = z.object({
 	script_hook: z.string(),
 	script_body: z.string(),
 	script_cta: z.string(),
-	script_full: z.string(),
-	script_duration_sec: z.number().int().min(15).max(60),
+
+	seo_title: z.string().max(100),
+	seo_description: z.string().max(200),
+	seo_tags: z.array(z.string()).max(10),
+
+	niche: z.enum([
+		"life_hacks",
+		"funny_fails",
+		"motivation",
+		"tech_tips",
+		"diy",
+		"asmr",
+		"fitness",
+		"finance",
+		"food",
+		"travel",
+		"gaming",
+		"beauty",
+		"pets",
+		"education",
+		"news",
+		"other",
+	]),
 	music_suggestion: z.string(),
 });
 
@@ -116,6 +137,70 @@ export async function scoreIdeasBatch(
 	});
 }
 
+// ── Generate script for an approved idea ────────────────────────
+
+export async function generateScript(idea: Idea): Promise<ScriptResult> {
+	const { output } = await generateText({
+		model: openai(MODEL),
+
+		output: Output.object({ schema: ScriptSchema }),
+
+		prompt: `You are an expert viral YouTube Shorts scriptwriter.
+
+			Transform the idea below into a highly engaging 30–60 second voiceover script.
+
+			VIDEO IDEA
+			Title: ${idea.title}
+			Source: ${idea.source_url}
+
+			SCRIPT STRUCTURE
+
+			HOOK (0–3 seconds)
+			Create a scroll-stopping hook that creates curiosity.
+			- Under 12 words
+			- Create curiosity (hidden truth, mistake, shocking fact, or question)
+
+			BODY (3–50 seconds)
+			Deliver fast, high-value content.
+			Rules:
+			- Maximum 10 words per sentence
+			- Each sentence on a new line
+			- Sentences should build curiosity toward the next line
+
+			You may occasionally include:
+			[TEXT OVERLAY: ...] for on-screen captions
+			[PAUSE] for a brief dramatic pause
+
+			CTA (50–60 seconds)
+			Encourage engagement.
+			Examples:
+			- "Comment YES if this helped."
+			- "Follow for daily tips."
+			- "Save this for later."
+			Make the CTA natural and relevant to the topic.
+
+			SEO
+			- seo_title: under 60 characters, curiosity-driven
+			- seo_description: 1–2 short sentences
+			- seo_tags: 3–8 short keywords
+			- niche: content category
+			- music_suggestion: suitable background music style
+
+			CRITICAL RULES
+			- Conversational American English. Direct to camera.
+			- Every sentence earns its place. Zero filler.
+			- Transform the concept — never copy the source.
+			- Written for voiceover (no visual-only references).
+			
+			Return STRICT JSON only.`,
+	});
+
+	const script_full = `${output.script_hook}\n\n${output.script_body}\n\n${output.script_cta}`;
+	const script_duration_sec = Math.round(
+		script_full.split(/\s+/).length / 2.5,
+	);
+	const result = { ...output, script_full, script_duration_sec };
+	return result as ScriptResult;
 }
 
 
