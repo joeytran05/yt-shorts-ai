@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Idea } from "@/types";
 import IdeaCard from "./IdeaCard";
+import { toast } from "sonner";
 
 interface Props {
 	initialIdeas: Idea[];
@@ -18,17 +19,25 @@ const IdeaList = ({
 	emptyIcon,
 }: Props) => {
 	const [ideas, setIdeas] = useState(initialIdeas);
-	const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(
-		null,
-	);
 
 	useEffect(() => {
 		setIdeas(initialIdeas);
 	}, [initialIdeas]);
 
 	const showToast = (msg: string, ok: boolean) => {
-		setToast({ msg, ok });
-		setTimeout(() => setToast(null), 4000);
+		toast(msg, {
+			style: {
+				background: ok ? "#071a10" : "#1a0707",
+				border: `1px solid ${ok ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+				borderLeft: `3px solid ${ok ? "var(--publish)" : "var(--danger)"}`,
+				borderRadius: "0.5rem",
+				color: ok ? "var(--publish)" : "var(--danger)",
+				width: "fit-content",
+				padding: "0.625rem 1rem",
+				fontFamily: "var(--font-mono)",
+			},
+			duration: 10000,
+		});
 	};
 
 	const handleUpdate = (updated: Idea) =>
@@ -66,20 +75,6 @@ const IdeaList = ({
 					/>
 				))}
 			</div>
-
-			{toast && (
-				<div
-					className={`fixed bottom-6 right-6 z-50 rounded-lg px-4 py-2.5 text-xs max-w-sm shadow-2xl animate-slide-up`}
-					style={{
-						background: toast.ok ? "#071a10" : "#1a0707",
-						border: `1px solid ${toast.ok ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
-						borderLeft: `3px solid ${toast.ok ? "var(--publish)" : "var(--danger)"}`,
-						color: toast.ok ? "var(--publish)" : "var(--danger)",
-					}}
-				>
-					{toast.msg}
-				</div>
-			)}
 		</>
 	);
 };

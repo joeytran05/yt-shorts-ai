@@ -25,7 +25,7 @@ const DiscoverButton = () => {
 					padding: "0.625rem 1rem",
 					fontFamily: "var(--font-mono)",
 				},
-				duration: 5000,
+				duration: 10000,
 			});
 		});
 

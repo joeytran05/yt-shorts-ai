@@ -16,7 +16,7 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-	title: "Shorts.AI — Money Machine",
+	title: "Shorts.AI - YT Shorts AI Agent",
 	description: "Automated YouTube Shorts pipeline",
 };
 
