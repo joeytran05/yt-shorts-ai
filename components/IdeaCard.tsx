@@ -59,12 +59,6 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 			>
 				{local.thumbnail_url ? (
 					<>
-						{/* <img
-							src={local.thumbnail_url}
-							alt=""
-							className="w-16 h-9 object-cover rounded-md shrink-0"
-							style={{ border: "1px solid var(--border)" }}
-						/> */}
 						<Image
 							src={local.thumbnail_url}
 							alt=""
@@ -155,7 +149,7 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 							href={local.source_url ?? "#"}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-1 text-[11px] transition-opacity hover:opacity-75 text-score"
+							className="flex items-center gap-1 text-xs transition-opacity hover:opacity-75 text-score"
 						>
 							View source <ExternalLink size={10} />
 						</a>
@@ -164,7 +158,7 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 								href={local.yt_url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-1 text-[11px] font-semibold transition-opacity hover:opacity-75 text-publish"
+								className="flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-75 text-publish"
 							>
 								🎬 View on YouTube <ExternalLink size={10} />
 							</a>
