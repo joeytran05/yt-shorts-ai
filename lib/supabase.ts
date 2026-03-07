@@ -142,3 +142,47 @@ export async function getRecentRuns(limit = 5): Promise<ScrapeRun[]> {
 	return (data ?? []) as ScrapeRun[];
 }
 
+// ── PRODUCTION JOBS ──────────────────────────────────────────────
+
+export async function createProductionJob(
+	idea_id: string,
+	job_type: ProductionJob["job_type"],
+	provider: string,
+	external_id?: string,
+): Promise<ProductionJob> {
+	const { data, error } = await db
+		.from("production_jobs")
+		.insert({ idea_id, job_type, provider, external_id, status: "running" })
+		.select()
+		.single();
+	if (error) throw error;
+	return data as ProductionJob;
+}
+
+export async function completeProductionJob(
+	id: string,
+	result_url: string,
+): Promise<void> {
+	await db
+		.from("production_jobs")
+		.update({
+			status: "done",
+			result_url,
+			completed_at: new Date().toISOString(),
+		})
+		.eq("id", id);
+}
+
+export async function failProductionJob(
+	id: string,
+	error_msg: string,
+): Promise<void> {
+	await db
+		.from("production_jobs")
+		.update({
+			status: "failed",
+			error_msg,
+			completed_at: new Date().toISOString(),
+		})
+		.eq("id", id);
+}

@@ -167,10 +167,6 @@ export async function generateScript(idea: Idea): Promise<ScriptResult> {
 			- Each sentence on a new line
 			- Sentences should build curiosity toward the next line
 
-			You may occasionally include:
-			[TEXT OVERLAY: ...] for on-screen captions
-			[PAUSE] for a brief dramatic pause
-
 			CTA (50–60 seconds)
 			Encourage engagement.
 			Examples:

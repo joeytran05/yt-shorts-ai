@@ -85,6 +85,46 @@ const ActionButtons = ({
 		);
 
 	// STAGE 2 — Trigger voiceover + video from scripted idea
+	if (status === "scripted")
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
+				<Select value={voiceId} onValueChange={setVoiceId}>
+					<SelectTrigger className="h-8 text-xs w-48">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent className="bg-bg border border-border">
+						{ELEVENLABS_VOICES.map((v) => (
+							<SelectItem
+								key={v.id}
+								value={v.id}
+								className="border-b border-border last:border-0 hover:bg-gray-800"
+							>
+								{v.name}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Button
+					size="sm"
+					disabled={isPending}
+					className="bg-prod text-white"
+					onClick={() =>
+						run(() => generateVoiceover(ideaId, voiceId))
+					}
+				>
+					🎤 Generate Voice
+				</Button>
+				{hasAudio && (
+					<Button
+						size="sm"
+						variant="outline"
+						disabled={isPending}
+					>
+						🎬 Generate Video
+					</Button>
+				)}
+			</div>
+		);
 
 	// STAGE 3 — Burn captions after video is rendered
 
