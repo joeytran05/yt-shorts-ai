@@ -4,24 +4,24 @@ import { chunk, daysAgo, md5, sleep } from "./utils";
 const YT = "https://www.googleapis.com/youtube/v3";
 const KEY = () => process.env.YOUTUBE_API_KEY!;
 
-export const DEFAULT_QUERIES = [
-	// Proven viral formats to copy
-	"life hacks shorts viral",
-	"satisfying shorts viral 2024",
-	"mind blowing facts shorts",
-	"things you didnt know shorts",
-	"before after transformation shorts",
-	"funny fails shorts viral",
-	"food hack shorts",
-	"money saving tips shorts",
-	"fitness tips shorts viral",
-	"tech tricks iphone shortcuts shorts",
-	// International → copy to EN/VN
-	"japanese life hacks shorts",
-	"korean beauty tips shorts",
-	"unexpected moments shorts",
-	"motivation quote shorts viral",
-];
+// export const DEFAULT_QUERIES = [
+// 	// Proven viral formats to copy
+// 	"life hacks shorts viral",
+// 	"satisfying shorts viral 2024",
+// 	"mind blowing facts shorts",
+// 	"things you didnt know shorts",
+// 	"before after transformation shorts",
+// 	"funny fails shorts viral",
+// 	"food hack shorts",
+// 	"money saving tips shorts",
+// 	"fitness tips shorts viral",
+// 	"tech tricks iphone shortcuts shorts",
+// 	// International → copy to EN/VN
+// 	"japanese life hacks shorts",
+// 	"korean beauty tips shorts",
+// 	"unexpected moments shorts",
+// 	"motivation quote shorts viral",
+// ];
 
 export async function searchViralShorts(
 	query: string,
@@ -84,7 +84,7 @@ export async function searchViralShorts(
 }
 
 export async function runFullDiscovery(
-	queries = DEFAULT_QUERIES,
+	queries: string[],
 	options: { minViews?: number; perQuery?: number } = {},
 ): Promise<Partial<Idea>[]> {
 	const { minViews = 100000, perQuery = 15 } = options;

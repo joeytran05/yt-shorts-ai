@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Idea } from "@/types";
 import IdeaCard from "./IdeaCard";
-import { toast } from "sonner";
+import { toastMessage } from "@/lib/utils";
 
 interface Props {
 	initialIdeas: Idea[];
@@ -25,19 +25,7 @@ const IdeaList = ({
 	}, [initialIdeas]);
 
 	const showToast = (msg: string, ok: boolean) => {
-		toast(msg, {
-			style: {
-				background: ok ? "#071a10" : "#1a0707",
-				border: `1px solid ${ok ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
-				borderLeft: `3px solid ${ok ? "var(--publish)" : "var(--danger)"}`,
-				borderRadius: "0.5rem",
-				color: ok ? "var(--publish)" : "var(--danger)",
-				width: "fit-content",
-				padding: "0.625rem 1rem",
-				fontFamily: "var(--font-mono)",
-			},
-			duration: 10000,
-		});
+		toastMessage(msg, ok, 10000);
 	};
 
 	const handleUpdate = (updated: Idea) =>

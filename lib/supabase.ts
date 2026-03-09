@@ -5,6 +5,7 @@ import type {
 	PipelineCount,
 	ScrapeRun,
 	ProductionJob,
+	Settings,
 } from "@/types";
 
 // ── Clients ──────────────────────────────────────────────────────
@@ -185,4 +186,40 @@ export async function failProductionJob(
 			completed_at: new Date().toISOString(),
 		})
 		.eq("id", id);
+}
+
+export async function getSettings(): Promise<Settings> {
+	const { data, error } = await supabase
+		.from("settings")
+		.select("*")
+		.eq("id", "global")
+		.single();
+
+	if (error || !data) {
+		// Return sensible defaults if settings row missing
+		return {
+			id: "global",
+			youtube_queries: [],
+			min_views: 100000,
+			per_query: 15,
+			target_niches: [],
+			auto_approve_above: null,
+			updated_at: new Date().toISOString(),
+		};
+	}
+	return data as Settings;
+}
+
+export async function updateSettings(
+	patch: Partial<Settings>,
+): Promise<Settings> {
+	const { data, error } = await db
+		.from("settings")
+		.update({ ...patch, updated_at: new Date().toISOString() })
+		.eq("id", "global")
+		.select()
+		.single();
+
+	if (error) throw new Error(`Settings update failed: ${error.message}`);
+	return data as Settings;
 }

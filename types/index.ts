@@ -283,3 +283,19 @@ export const OPTIMAL_UPLOAD_TIMES = [
 	{ label: "6 PM UTC (1PM EST)", utc_hour: 18 },
 	{ label: "8 PM UTC (3PM EST)", utc_hour: 20 },
 ];
+
+export interface YoutubeQuery {
+	query: string;
+	enabled: boolean;
+	custom: boolean;
+}
+
+export interface Settings {
+	id: string;
+	youtube_queries: YoutubeQuery[];
+	min_views: number;
+	per_query: number;
+	target_niches: string[];
+	auto_approve_above: number | null;
+	updated_at: string;
+}

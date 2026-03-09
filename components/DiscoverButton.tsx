@@ -1,8 +1,8 @@
 "use client";
 
 import { discoverIdeas } from "@/lib/actions/discover";
+import { toastMessage } from "@/lib/utils";
 import { useTransition } from "react";
-import { toast } from "sonner";
 
 const DiscoverButton = () => {
 	const [isPending, startTransition] = useTransition();
@@ -14,19 +14,7 @@ const DiscoverButton = () => {
 				? `✓ Found ${result.data.found} ideas, ${result.data.new_ideas} new (${(result.data.duration_ms / 1000).toFixed(1)}s)`
 				: `✗ ${result.error}`;
 
-			toast(msg, {
-				style: {
-					background: result.ok ? "#071a10" : "#1a0707",
-					border: `1px solid ${result.ok ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
-					borderLeft: `3px solid ${result.ok ? "var(--publish)" : "var(--danger)"}`,
-					borderRadius: "0.5rem",
-					color: result.ok ? "var(--publish)" : "var(--danger)",
-					width: "fit-content",
-					padding: "0.625rem 1rem",
-					fontFamily: "var(--font-mono)",
-				},
-				duration: 10000,
-			});
+			toastMessage(msg, result.ok, 10000);
 		});
 
 	return (

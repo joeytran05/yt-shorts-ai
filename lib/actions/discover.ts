@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runFullDiscovery, DEFAULT_QUERIES } from "@/lib/youtube-scraper";
+import { runFullDiscovery } from "@/lib/youtube-scraper";
 import { batchScore } from "@/lib/ai";
 import {
 	upsertIdea,
@@ -9,25 +9,40 @@ import {
 	endScrapeRun,
 	updateIdea,
 	supabase,
+	getSettings,
 } from "@/lib/supabase";
 import type { ActionResult, DiscoverResult, Idea } from "@/types";
 
+// Statuses considered "early stage" — safe to overwrite on re-discovery
 const OVERWRITABLE_STATUSES = new Set(["discovered", "scored", "rejected"]);
 
 export async function discoverIdeas(
 	formData?: FormData,
 ): Promise<ActionResult<DiscoverResult>> {
 	const t0 = Date.now();
-	const queries = DEFAULT_QUERIES;
-	const minViews = parseInt(
-		(formData?.get("min_views") as string) ?? "100000",
-	);
 
+	// Load queries + options from settings
+	const settings = await getSettings();
+	const queries = settings.youtube_queries
+		.filter((q) => q.enabled)
+		.map((q) => q.query);
+
+	if (queries.length === 0) {
+		return {
+			ok: false,
+			error: "No queries enabled — add some in Settings",
+		};
+	}
+
+	const minViews = parseInt(
+		(formData?.get("min_views") as string) ?? String(settings.min_views),
+	);
+	const perQuery = settings.per_query;
 	const run = await startScrapeRun(queries.slice(0, 5));
 
 	try {
 		// 1. Scrape raw ideas
-		const raw = await runFullDiscovery(queries, { minViews, perQuery: 1 });
+		const raw = await runFullDiscovery(queries, { minViews, perQuery });
 
 		// 2. Save to DB to get IDs for scoring
 		const savedRecords: Idea[] = [];

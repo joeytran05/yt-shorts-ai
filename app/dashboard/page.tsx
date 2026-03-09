@@ -6,6 +6,9 @@ import PipelineStrip from "@/components/PipelineStrip";
 import IdeaList from "@/components/IdeaList";
 import { STAGE_GROUPS } from "@/constants";
 import DiscoverButton from "@/components/DiscoverButton";
+import Link from "next/link";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const STAGE_ICONS: Record<string, string> = {
 	discover: "🔍",
@@ -48,6 +51,16 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				</Suspense>
 
 				<DiscoverButton />
+
+				<Button variant="outline" className="hover:bg-neutral-800">
+					<Link
+						href="/settings"
+						className="flex items-center gap-1.5 transition-opacity hover:opacity-75 shrink-0 text-muted"
+					>
+						<Settings size={13} />
+						Settings
+					</Link>
+				</Button>
 			</header>
 
 			{/* Pipeline strip */}
