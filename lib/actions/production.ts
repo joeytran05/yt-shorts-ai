@@ -112,3 +112,46 @@ export async function generateVideo(
 	}
 }
 
+export async function approveProducedVideo(
+	ideaId: string,
+	notes?: string,
+): Promise<ActionResult<Idea>> {
+	try {
+		const updated = await updateIdea(ideaId, {
+			status: "ready_to_publish",
+			review_notes: notes ?? null,
+		});
+		revalidatePath("/dashboard");
+		return { ok: true, data: updated };
+	} catch (err) {
+		return {
+			ok: false,
+			error:
+				err instanceof Error
+					? err.message
+					: JSON.stringify(err, null, 2),
+		};
+	}
+}
+
+export async function requestChanges(
+	ideaId: string,
+	notes: string,
+): Promise<ActionResult> {
+	try {
+		await updateIdea(ideaId, {
+			status: "changes_requested",
+			review_notes: notes,
+		});
+		revalidatePath("/dashboard");
+		return { ok: true, data: undefined };
+	} catch (err) {
+		return {
+			ok: false,
+			error:
+				err instanceof Error
+					? err.message
+					: JSON.stringify(err, null, 2),
+		};
+	}
+}

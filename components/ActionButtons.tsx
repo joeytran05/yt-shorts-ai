@@ -83,7 +83,7 @@ const ActionButtons = ({
 			</div>
 		);
 
-	// STAGE 2 — Trigger voiceover + video from scripted idea
+	// STAGE 2 — Trigger voiceover + video + captions from scripted idea
 	if (status === "scripted")
 		return (
 			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
@@ -126,11 +126,10 @@ const ActionButtons = ({
 			</div>
 		);
 
-	// STAGE 3 — Burn captions after video is rendered
+	// STAGE 3 — Final review approve / request changes
 
-	// STAGE 4 — Final review approve / request changes
+	// STAGE 4 — Schedule or upload now
 
-	// STAGE 5 — Schedule or upload now
 	return null;
 };
 

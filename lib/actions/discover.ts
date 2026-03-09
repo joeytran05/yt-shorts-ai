@@ -8,8 +8,11 @@ import {
 	startScrapeRun,
 	endScrapeRun,
 	updateIdea,
+	supabase,
 } from "@/lib/supabase";
 import type { ActionResult, DiscoverResult, Idea } from "@/types";
+
+const OVERWRITABLE_STATUSES = new Set(["discovered", "scored", "rejected"]);
 
 export async function discoverIdeas(
 	formData?: FormData,
@@ -30,19 +33,42 @@ export async function discoverIdeas(
 		const savedRecords: Idea[] = [];
 		let newCount = 0;
 
+		// Load existing ideas to protect advanced statuses
+		const hashes = raw
+			.map((i) => i.content_hash)
+			.filter(Boolean) as string[];
+
+		const { data: existing } = await supabase
+			.from("ideas")
+			.select("id, content_hash, status")
+			.in("content_hash", hashes);
+
+		const existingMap = new Map(
+			(existing ?? []).map((e) => [e.content_hash, e.status]),
+		);
+
+		let skipped = 0;
+
 		for (const idea of raw) {
 			if (!idea.content_hash) continue;
+
+			const existingStatus = existingMap.get(idea.content_hash);
+
+			// Skip ideas that progressed past scoring
+			if (existingStatus && !OVERWRITABLE_STATUSES.has(existingStatus)) {
+				skipped++;
+				continue;
+			}
 
 			const record = await upsertIdea({
 				...idea,
 				content_hash: idea.content_hash,
-				status: "discovered", // not scored yet
+				status: "discovered",
 			} as Partial<Idea> & { content_hash: string });
 
 			savedRecords.push(record);
 
-			if (Date.now() - new Date(record.created_at).getTime() < 60_000)
-				newCount++;
+			if (!existingStatus) newCount++;
 		}
 
 		// 3. Now batch score using DB IDs
@@ -79,6 +105,7 @@ export async function discoverIdeas(
 				run_id: run.id,
 				found: raw.length,
 				new_ideas: newCount,
+				skipped,
 				ideas: updated,
 				duration_ms,
 			},

@@ -182,6 +182,7 @@ export interface ScoreResult {
 	hook_score: number;
 	trend_score: number;
 	competition_score: number;
+	// ai_reasoning?: string | null;
 }
 
 export interface ScriptResult {
@@ -209,6 +210,7 @@ export interface DiscoverResult {
 	run_id: string;
 	found: number;
 	new_ideas: number;
+	skipped: number;
 	ideas: Idea[];
 	duration_ms: number;
 }

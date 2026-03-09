@@ -4,8 +4,6 @@ import { z } from "zod";
 import type { Idea, ScoreResult, ScriptResult } from "@/types";
 import { openai } from "@ai-sdk/openai";
 
-// const MODEL = "claude-sonnet-4-20250514";
-// const MODEL = "gemini-3-flash-preview";
 const MODEL = "gpt-5-nano";
 
 const ScoreSchema = z.object({
@@ -28,6 +26,7 @@ const ScriptSchema = z.object({
 	seo_title: z.string().max(100),
 	seo_description: z.string().max(200),
 	seo_tags: z.array(z.string()).max(10),
+	// seo_hashtags: z.array(z.string()).max(5),
 
 	niche: z.enum([
 		"life_hacks",
