@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Environment variables — never commit these
+.env
+.env.local
+.env.production
+
+# Remotion bundle cache — large, regenerated automatically
+.remotion/
+
+# Render temp files
+*.mp4
+*.mp3
+*.srt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

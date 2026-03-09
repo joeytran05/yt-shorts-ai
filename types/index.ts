@@ -1,3 +1,5 @@
+import { SceneData } from "./scenes";
+
 export type IdeaStatus =
 	| "discovered"
 	| "scored"
@@ -123,6 +125,22 @@ export interface Idea {
 	approved_at: string | null;
 	last_error: string | null;
 	retry_count: number;
+
+	// Video pipeline
+	scene_data: SceneData | null;
+	scenes_status:
+		| "none"
+		| "planning"
+		| "clips_fetching"
+		| "clips_ready"
+		| "rendering"
+		| "done"
+		| "failed";
+	render_job_id: number | null;
+	audio_duration_sec: number | null;
+	render_error: string | null;
+	render_started_at: string | null;
+	render_finished_at: string | null;
 }
 
 export interface ScrapeRun {

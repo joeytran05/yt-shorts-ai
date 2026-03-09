@@ -11,6 +11,7 @@ import {
 	db,
 } from "@/lib/supabase";
 import type { ActionResult, Idea } from "@/types";
+import { enqueueVideoRender } from "../queue";
 
 export async function generateVoiceover(
 	ideaId: string,
@@ -76,6 +77,36 @@ export async function generateVoiceover(
 		await failProductionJob(job.id, error);
 		await setStatus(ideaId, "failed", { last_error: error });
 
+		revalidatePath("/dashboard");
+		return { ok: false, error };
+	}
+}
+
+// Enqueue job → Railway worker handles the rest asynchronously
+export async function generateVideo(
+	ideaId: string,
+): Promise<ActionResult<{ job_queued: boolean; msg_id: string }>> {
+	const idea = await getIdea(ideaId);
+	if (!idea) return { ok: false, error: "Idea not found" };
+	if (!idea.audio_url)
+		return { ok: false, error: "No audio — generate voiceover first" };
+	if (!idea.script_full) return { ok: false, error: "No script found" };
+
+	try {
+		const msgId = await enqueueVideoRender(ideaId, "normal");
+
+		await updateIdea(ideaId, {
+			status: "generating_video",
+			scenes_status: "none",
+			render_job_id: Number(msgId),
+			render_error: null,
+		});
+
+		revalidatePath("/dashboard");
+		return { ok: true, data: { job_queued: true, msg_id: String(msgId) } };
+	} catch (err) {
+		const error = err instanceof Error ? err.message : String(err);
+		await setStatus(ideaId, "failed", { last_error: error });
 		revalidatePath("/dashboard");
 		return { ok: false, error };
 	}

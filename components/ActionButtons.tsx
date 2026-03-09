@@ -14,7 +14,6 @@ import { ELEVENLABS_VOICES, OPTIMAL_UPLOAD_TIMES } from "@/types";
 import type { IdeaStatus, Idea } from "@/types";
 import { approveIdea, rejectIdea } from "@/lib/actions/script";
 import {
-	addCaptions,
 	approveProducedVideo,
 	generateVideo,
 	generateVoiceover,
@@ -119,6 +118,7 @@ const ActionButtons = ({
 						size="sm"
 						variant="outline"
 						disabled={isPending}
+						onClick={() => run(() => generateVideo(ideaId))}
 					>
 						🎬 Generate Video
 					</Button>

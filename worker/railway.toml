@@ -1,0 +1,15 @@
+[build]
+builder        = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand          = "node dist/index.js"
+restartPolicyType     = "on_failure"
+restartPolicyMaxRetries = 5
+```
+
+---
+
+**New env var to add** to both `.env.local` and Railway:
+```
+PEXELS_API_KEY=your_key_here   # free at pexels.com/api

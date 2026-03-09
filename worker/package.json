@@ -1,0 +1,30 @@
+{
+	"name": "yt-shorts-worker",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "ts-node --project tsconfig.json index.ts",
+		"build": "tsc --project tsconfig.json",
+		"start": "node dist/index.js"
+	},
+	"dependencies": {
+		"@ai-sdk/openai": "^3.0.41",
+		"@remotion/bundler": "^4.0.434",
+		"@remotion/captions": "^4.0.434",
+		"@remotion/media": "^4.0.434",
+		"@remotion/renderer": "^4.0.434",
+		"@supabase/supabase-js": "^2.98.0",
+		"ai": "^6.0.116",
+		"react": "19.2.3",
+		"react-dom": "19.2.3",
+		"remotion": "^4.0.434",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"ts-node": "^10.9.2",
+		"typescript": "^5"
+	}
+}
