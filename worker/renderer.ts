@@ -58,7 +58,13 @@ export async function renderShortsVideo(input: {
 		imageFormat: "jpeg",
 		jpegQuality: 88,
 		concurrency: 2,
-		timeoutInMilliseconds: 120_000,
+		timeoutInMilliseconds: 180_000,
+		// Cap how much decoded video Remotion keeps in memory at once
+		// Default is unlimited — 256MB prevents 4K frames from piling up
+		offthreadVideoCacheSizeInBytes: 256 * 1024 * 1024,
+		chromiumOptions: {
+			disableWebSecurity: true,
+		},
 		onProgress: ({ progress }) => {
 			process.stdout.write(`\r[renderer] ${Math.round(progress * 100)}%`);
 		},

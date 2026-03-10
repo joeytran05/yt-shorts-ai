@@ -5,6 +5,8 @@ import { generateCaptions } from "./captions"; // ← new
 import { renderShortsVideo } from "./renderer";
 import type { VideoScene, SceneData } from "../types/scenes";
 import type { Idea } from "../types";
+import { compressVideo } from "./compressor";
+import { startClipServer } from "./clip-server";
 
 function db() {
 	return createClient(
@@ -111,7 +113,7 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 		console.log("[pipeline] B: Skipped (all clips saved)");
 	}
 
-	// ── CHECKPOINT C: Captions + Render ──────────────────────────
+	// ── CHECKPOINT C: Download → Captions → Render → Compress ─────
 	const timed = buildTimedScenes(
 		sceneData.scenes.filter((s) => s.clip_url),
 		durationSec,
@@ -119,30 +121,55 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 	if (timed.length === 0)
 		throw new Error("Zero clips — check PEXELS_API_KEY");
 
-	// Generate captions via Whisper (runs in parallel with render prep)
-	console.log("[pipeline] C: Generating captions + rendering…");
 	await patch(ideaId, {
 		scenes_status: "rendering",
 		render_started_at: new Date().toISOString(),
 	});
 
-	const captions = await generateCaptions(idea.audio_url!);
-	console.log(`[pipeline] C: ${captions.length} caption entries`);
+	// Start local server + generate captions in parallel
+	console.log("[pipeline] C: Starting clip server + generating captions…");
+	const [clipServer, captions] = await Promise.all([
+		startClipServer(timed),
+		generateCaptions(idea.audio_url!),
+	]);
 
-	const buffer = await renderShortsVideo({
-		scenes: timed,
-		audioUrl: idea.audio_url!,
-		captions, // ← passed to Remotion
-		totalDurationSec: durationSec,
-	});
+	console.log(
+		`[pipeline] C: ${captions.length} captions, rendering ${clipServer.scenes.length} scenes…`,
+	);
 
-	// ── Upload to Supabase Storage ────────────────────────────────
+	let rawBuffer: Buffer;
+	try {
+		rawBuffer = await renderShortsVideo({
+			scenes: clipServer.scenes, // local http:// URLs
+			audioUrl: idea.audio_url!,
+			captions,
+			totalDurationSec: durationSec,
+		});
+	} finally {
+		// Always shut down server + clean up regardless of render outcome
+		await clipServer.shutdown();
+		await clipServer.cleanup();
+	}
+
+	// ── Compress before upload ────────────────────────────────────
+	console.log(
+		`[pipeline] Compressing ${(rawBuffer.byteLength / 1_000_000).toFixed(1)}MB raw video…`,
+	);
+	const compressed = await compressVideo(rawBuffer);
+	console.log(
+		`[pipeline] Compressed to ${(compressed.byteLength / 1_000_000).toFixed(1)}MB`,
+	);
+
+	// ── Upload compressed video ───────────────────────────────────
 	const fileName = `videos/${ideaId}-${Date.now()}.mp4`;
 	const client = db();
 
 	const { error: upErr } = await client.storage
 		.from("production-assets")
-		.upload(fileName, buffer, { contentType: "video/mp4", upsert: true });
+		.upload(fileName, compressed, {
+			contentType: "video/mp4",
+			upsert: true,
+		});
 	if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
 	const { data: urlData } = client.storage

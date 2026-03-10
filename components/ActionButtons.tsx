@@ -127,6 +127,29 @@ const ActionButtons = ({
 		);
 
 	// STAGE 3 — Final review approve / request changes
+	if (status === "produced")
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 border-t border-border">
+				<Button
+					size="sm"
+					variant="outline"
+					disabled={isPending}
+					onClick={() =>
+						run(() => requestChanges(ideaId, "Needs revision"))
+					}
+				>
+					✏ Request Changes
+				</Button>
+				<Button
+					size="sm"
+					disabled={isPending}
+					className="bg-publish text-[#071a10]"
+					onClick={() => run(() => approveProducedVideo(ideaId))}
+				>
+					✓ Approve Video
+				</Button>
+			</div>
+		);
 
 	// STAGE 4 — Schedule or upload now
 

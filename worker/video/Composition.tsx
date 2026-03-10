@@ -66,6 +66,7 @@ function SceneClip({
 							objectFit: "cover",
 						}}
 						muted
+						pauseWhenBuffering
 					/>
 				</AbsoluteFill>
 

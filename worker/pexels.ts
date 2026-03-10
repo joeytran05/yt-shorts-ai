@@ -104,16 +104,28 @@ export async function fetchAllClips(
 
 function pickBestFile(files: PexelsVideoFile[]): PexelsVideoFile | null {
 	if (!files?.length) return null;
+
 	return (
 		[...files]
-			.filter((f) => !f.link.includes(".m3u8"))
+			.filter((f) => {
+				if (f.link.includes(".m3u8")) return false; // no HLS
+				// Cap at 1080p — reject anything wider than 1920 or taller than 1920
+				// Pexels 4K files are 3840x2160 or 2160x3840 — these crash Chromium
+				const maxDim = Math.max(f.width, f.height);
+				return maxDim <= 1920;
+			})
 			.sort((a, b) => {
+				// Portrait first
 				const ap = a.height > a.width ? 1 : 0;
 				const bp = b.height > b.width ? 1 : 0;
 				if (ap !== bp) return bp - ap;
+
+				// HD quality string preferred
 				const ah = a.quality === "hd" ? 1 : 0;
 				const bh = b.quality === "hd" ? 1 : 0;
 				if (ah !== bh) return bh - ah;
+
+				// Highest resolution within the cap
 				return b.height - a.height;
 			})[0] ?? null
 	);
