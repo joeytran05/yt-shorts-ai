@@ -7,6 +7,7 @@ import type { VideoScene, SceneData } from "../types/scenes";
 import type { Idea } from "../types";
 import { compressVideo } from "./compressor";
 import { startClipServer } from "./clip-server";
+import { fetchBackgroundMusic } from "./music-fetcher";
 
 function db() {
 	return createClient(
@@ -113,7 +114,7 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 		console.log("[pipeline] B: Skipped (all clips saved)");
 	}
 
-	// ── CHECKPOINT C: Download → Captions → Render → Compress ─────
+	// ── CHECKPOINT C: Download → Captions + Music → Render ────────
 	const timed = buildTimedScenes(
 		sceneData.scenes.filter((s) => s.clip_url),
 		durationSec,
@@ -126,15 +127,25 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 		render_started_at: new Date().toISOString(),
 	});
 
-	// Start local server + generate captions in parallel
-	console.log("[pipeline] C: Starting clip server + generating captions…");
-	const [clipServer, captions] = await Promise.all([
+	// Run all three in parallel — independent of each other
+	console.log("[pipeline] C: Clip server + captions + music in parallel…");
+	const [clipServer, captions, musicUrl] = await Promise.all([
 		startClipServer(timed),
 		generateCaptions(idea.audio_url!),
+		idea.music_url ?? // manually selected - use directly
+			(await fetchBackgroundMusic(
+				idea.music_track ?? "background",
+				durationSec,
+			)),
 	]);
 
+	// Save music_url to DB so it's visible in the dashboard
+	if (musicUrl) {
+		await patch(ideaId, { music_url: musicUrl });
+	}
+
 	console.log(
-		`[pipeline] C: ${captions.length} captions, rendering ${clipServer.scenes.length} scenes…`,
+		`[pipeline] C: ${captions.length} captions, rendering ${clipServer.scenes.length} scenes…, music: ${musicUrl ? "✓" : "none"}`,
 	);
 
 	let rawBuffer: Buffer;
@@ -143,6 +154,7 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 			scenes: clipServer.scenes, // local http:// URLs
 			audioUrl: idea.audio_url!,
 			captions,
+			musicUrl,
 			totalDurationSec: durationSec,
 		});
 	} finally {

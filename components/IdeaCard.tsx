@@ -120,9 +120,13 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 							reasoning={local.ai_reasoning}
 						/>
 						<ScriptPanel
+							ideaId={local.id}
 							scriptFull={local.script_full}
 							durationSec={local.script_duration_sec}
 							musicTrack={local.music_track}
+							currentMusicUrl={local.music_url}
+							onUpdate={handleUpdate}
+							onToast={onToast}
 						/>
 					</div>
 

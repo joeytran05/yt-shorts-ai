@@ -16,7 +16,7 @@ async function getBundle(): Promise<string> {
 	if (cachedBundleUrl) return cachedBundleUrl;
 	console.log("[renderer] Bundling…");
 	cachedBundleUrl = await bundle({
-		entryPoint: path.resolve(__dirname, "video/index.tsx"), // ← updated path
+		entryPoint: path.resolve(__dirname, "video/index.tsx"),
 		webpackOverride: (config) => config,
 	});
 	console.log("[renderer] Bundle ready");
@@ -26,10 +26,11 @@ async function getBundle(): Promise<string> {
 export async function renderShortsVideo(input: {
 	scenes: VideoScene[];
 	audioUrl: string;
-	captions: CaptionEntry[]; // ← added
+	captions: CaptionEntry[];
+	musicUrl: string | null;
 	totalDurationSec: number;
 }): Promise<Buffer> {
-	const { scenes, audioUrl, captions, totalDurationSec } = input;
+	const { scenes, audioUrl, captions, musicUrl, totalDurationSec } = input;
 	const totalFrames = Math.round(totalDurationSec * FPS);
 	const bundleUrl = await getBundle();
 
@@ -37,6 +38,7 @@ export async function renderShortsVideo(input: {
 		scenes,
 		audioUrl,
 		captions,
+		musicUrl,
 		totalDurationSec,
 		fps: FPS,
 	};

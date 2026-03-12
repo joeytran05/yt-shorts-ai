@@ -124,7 +124,7 @@ export function QueryManager({ initial }: { initial: YoutubeQuery[] }) {
 							onClick={() => remove(i)}
 							className="shrink-0 hover:opacity-75 transition-opacity"
 						>
-							<Trash2 size={12} className="text-danger" />
+							<Trash2 size={14} className="text-danger" />
 						</button>
 					</div>
 				))}

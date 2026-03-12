@@ -105,7 +105,8 @@ export async function generateVideo(
 		revalidatePath("/dashboard");
 		return { ok: true, data: { job_queued: true, msg_id: String(msgId) } };
 	} catch (err) {
-		const error = err instanceof Error ? err.message : String(err);
+		const error =
+			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
 		await setStatus(ideaId, "failed", { last_error: error });
 		revalidatePath("/dashboard");
 		return { ok: false, error };
@@ -145,6 +146,38 @@ export async function requestChanges(
 		});
 		revalidatePath("/dashboard");
 		return { ok: true, data: undefined };
+	} catch (err) {
+		return {
+			ok: false,
+			error:
+				err instanceof Error
+					? err.message
+					: JSON.stringify(err, null, 2),
+		};
+	}
+}
+
+export async function setMusicTrack(
+	ideaId: string,
+	trackId: string | null, // null = use auto mood matching
+): Promise<ActionResult<Idea>> {
+	try {
+		let music_url: string | null = null;
+
+		if (trackId) {
+			const { data: track } = await db
+				.from("music_tracks")
+				.select("url, name")
+				.eq("id", trackId)
+				.single();
+
+			if (!track) return { ok: false, error: "Track not found" };
+			music_url = track.url;
+		}
+
+		const updated = await updateIdea(ideaId, { music_url });
+		revalidatePath("/dashboard");
+		return { ok: true, data: updated };
 	} catch (err) {
 		return {
 			ok: false,

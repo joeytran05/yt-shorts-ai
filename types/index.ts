@@ -107,6 +107,7 @@ export interface Idea {
 	video_raw_url: string | null;
 	video_captioned_url: string | null;
 	music_track: string | null;
+	music_url: string | null;
 	voice_id: string | null;
 	final_video_url: string | null;
 	thumbnail_custom_url: string | null;

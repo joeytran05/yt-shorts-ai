@@ -45,6 +45,7 @@ export interface ShortsCompositionProps {
 	scenes: VideoScene[];
 	audioUrl: string;
 	captions: CaptionEntry[]; // ← parsed from Whisper SRT
+	musicUrl: string | null;
 	fps: number;
 	[key: string]: unknown; // ← makes it compatible with Record<string, unknown>
 }

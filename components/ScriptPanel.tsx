@@ -1,10 +1,25 @@
+import { Idea } from "@/types";
+import { MusicSelector } from "./MusicSelector";
+
 interface Props {
+	ideaId: string;
 	scriptFull?: string | null;
 	durationSec?: number | null;
-	musicTrack?: string | null;
+	musicTrack?: string | null; // GPT-5's suggestion
+	currentMusicUrl?: string | null; // saved music_url on idea
+	onUpdate: (patch: Partial<Idea>) => void;
+	onToast: (msg: string, ok: boolean) => void;
 }
 
-const ScriptPanel = ({ scriptFull, durationSec, musicTrack }: Props) => {
+export default function ScriptPanel({
+	ideaId,
+	scriptFull,
+	durationSec,
+	musicTrack,
+	currentMusicUrl,
+	onUpdate,
+	onToast,
+}: Props) {
 	if (!scriptFull) return null;
 
 	return (
@@ -15,13 +30,14 @@ const ScriptPanel = ({ scriptFull, durationSec, musicTrack }: Props) => {
 			<div className="rounded-lg p-3 max-h-48 overflow-y-auto bg-surface">
 				<pre className="script-pre">{scriptFull}</pre>
 			</div>
-			{musicTrack && (
-				<p className="text-xs mt-2 text-muted">
-					🎵 <span className="text-score">{musicTrack}</span>
-				</p>
-			)}
+
+			<MusicSelector
+				ideaId={ideaId}
+				musicSuggestion={musicTrack ?? null}
+				currentMusicUrl={currentMusicUrl ?? null}
+				onUpdate={onUpdate}
+				onToast={onToast}
+			/>
 		</div>
 	);
-};
-
-export default ScriptPanel;
+}

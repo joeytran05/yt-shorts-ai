@@ -8,6 +8,7 @@ const DEFAULT_PROPS: ShortsCompositionProps = {
 	scenes: [],
 	audioUrl: "",
 	captions: [],
+	musicUrl: null,
 	totalDurationSec: 30,
 	fps: 30,
 };

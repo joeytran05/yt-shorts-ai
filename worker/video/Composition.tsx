@@ -104,7 +104,6 @@ function SceneClip({
 								letterSpacing: "-0.01em",
 								textShadow:
 									"0 2px 20px rgba(0,0,0,1), 0 1px 6px rgba(0,0,0,0.8)",
-								// Highlight current word with yellow
 								whiteSpace: "pre-wrap",
 							}}
 						>
@@ -122,11 +121,23 @@ export function ShortsComposition({
 	scenes,
 	audioUrl,
 	captions,
+	musicUrl,
 	fps,
 }: ShortsCompositionProps) {
 	return (
 		<AbsoluteFill style={{ background: "#000" }}>
-			<Audio src={audioUrl} />
+			{/* Background music — low volume so voiceover stays clear */}
+			{musicUrl && (
+				<Audio
+					src={musicUrl}
+					volume={0.2} // 20%
+					loop // loop if music is shorter than video
+				/>
+			)}
+
+			{/* Voiceover — full volume */}
+			<Audio src={audioUrl} volume={1} />
+
 			{scenes.map((scene) => (
 				<SceneClip
 					key={scene.index}

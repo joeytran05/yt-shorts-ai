@@ -1,15 +1,19 @@
 import { GeneralSettings } from "@/components/GeneralSettings";
+import { MusicLibrary } from "@/components/MusicLibrary";
 import { QueryManager } from "@/components/QueryManager";
 import { Button } from "@/components/ui/button";
-import { getSettings } from "@/lib/supabase";
+import { getSettings, supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default async function SettingsPage() {
-	const settings = await getSettings();
+	const [settings, { data: tracks }] = await Promise.all([
+		getSettings(),
+		supabase.from("music_tracks").select("*").order("mood"),
+	]);
 
 	return (
-		<main className="max-w-180 mx-auto px-6 py-10">
-			<div className="mb-8 flex items-center justify-between">
+		<main className="max-w-7xl mx-auto px-6 py-10">
+			<div className="mb-8 mx-4 flex items-center justify-between">
 				<div>
 					<h1 className="font-display text-2xl font-black text-text">
 						Settings
@@ -28,8 +32,11 @@ export default async function SettingsPage() {
 				</Button>
 			</div>
 
-			<div className="flex flex-col gap-5">
-				<GeneralSettings initial={settings} />
+			<div className="flex justify-center gap-5">
+				<div className="flex flex-col gap-5">
+					<GeneralSettings initial={settings} />
+					<MusicLibrary initial={tracks ?? []} />
+				</div>
 				<QueryManager initial={settings.youtube_queries} />
 			</div>
 		</main>
