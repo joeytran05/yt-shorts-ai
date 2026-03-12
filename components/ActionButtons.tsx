@@ -88,7 +88,7 @@ const ActionButtons = ({
 		return (
 			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
 				<Select value={voiceId} onValueChange={setVoiceId}>
-					<SelectTrigger className="h-8 text-xs w-48">
+					<SelectTrigger className="h-8 text-xs w-48 hover:bg-gray-800">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent className="bg-bg border border-border">
@@ -106,7 +106,7 @@ const ActionButtons = ({
 				<Button
 					size="sm"
 					disabled={isPending}
-					className="bg-prod text-white"
+					className="bg-prod text-white hover:bg-prod/90"
 					onClick={() =>
 						run(() => generateVoiceover(ideaId, voiceId))
 					}
@@ -137,13 +137,14 @@ const ActionButtons = ({
 					onClick={() =>
 						run(() => requestChanges(ideaId, "Needs revision"))
 					}
+					className="hover:bg-gray-800"
 				>
 					✏ Request Changes
 				</Button>
 				<Button
 					size="sm"
 					disabled={isPending}
-					className="bg-publish text-[#071a10]"
+					className="bg-publish text-[#071a10] hover:bg-publish/90"
 					onClick={() => run(() => approveProducedVideo(ideaId))}
 				>
 					✓ Approve Video

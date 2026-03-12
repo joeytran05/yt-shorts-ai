@@ -22,7 +22,7 @@ const DiscoverButton = () => {
 			onClick={handleClick}
 			disabled={isPending}
 			className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border-none cursor-pointer transition-all
-        ${isPending ? "animate-pulse-slow cursor-not-allowed bg-dim text-muted" : "hover:opacity-90 bg-danger text-white"}`}
+        ${isPending ? "animate-pulse-slow cursor-not-allowed bg-dim text-muted" : "hover:bg-danger/80 bg-danger text-white"}`}
 			style={{
 				fontFamily: "var(--font-mono)",
 			}}
