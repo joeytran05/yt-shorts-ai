@@ -1,5 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { generateText, generateObject, Output } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 import type { Idea, ScoreResult, ScriptResult } from "@/types";
 import { openai } from "@ai-sdk/openai";
@@ -198,6 +197,27 @@ export async function generateScript(idea: Idea): Promise<ScriptResult> {
 	return result as ScriptResult;
 }
 
+// ── Rewrite SEO metadata ─────────────────────────────────────────
+
+export async function rewriteSEO(idea: Idea) {
+	const { output } = await generateText({
+		model: openai(MODEL),
+
+		output: Output.object({ schema: SeoSchema }),
+
+		prompt: `Rewrite the SEO for this YouTube Short to maximize CTR and views.
+
+			Current title: ${idea.seo_title ?? idea.title}
+			Niche: ${idea.niche}
+			Viral score: ${idea.viral_score}/100
+			Script hook: ${idea.script_hook}
+
+			Make the title irresistible. Description should tease value + soft CTA.
+			Tags should be specific to the content. Include trending hashtags.`,
+	});
+
+	return output;
+}
 
 export async function batchScore(
 	ideas: Partial<Idea>[],

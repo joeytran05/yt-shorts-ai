@@ -153,6 +153,46 @@ const ActionButtons = ({
 		);
 
 	// STAGE 4 — Schedule or upload now
+	if (status === "ready_to_publish" || status === "changes_requested")
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
+				<Select value={scheduleTime} onValueChange={setScheduleTime}>
+					<SelectTrigger className="h-8 text-xs w-52 hover:bg-gray-800">
+						<SelectValue placeholder="Pick upload time…" />
+					</SelectTrigger>
+					<SelectContent className="bg-bg border border-border">
+						{OPTIMAL_UPLOAD_TIMES.map((t) => (
+							<SelectItem
+								key={t.utc_hour}
+								value={nextUTC(t.utc_hour)}
+								className="border-b border-border last:border-0 hover:bg-gray-800"
+							>
+								{t.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Button
+					size="sm"
+					variant="outline"
+					disabled={isPending || !scheduleTime}
+					onClick={() =>
+						run(() => scheduleUpload(ideaId, scheduleTime))
+					}
+					className="hover:bg-gray-800"
+				>
+					📅 Schedule
+				</Button>
+				<Button
+					size="sm"
+					disabled={isPending}
+					className="bg-publish text-[#071a10] hover:bg-publish/90"
+					onClick={() => run(() => uploadToYouTube(ideaId))}
+				>
+					🚀 Upload Now
+				</Button>
+			</div>
+		);
 
 	return null;
 };
