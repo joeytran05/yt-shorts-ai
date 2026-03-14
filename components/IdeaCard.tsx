@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-import type { Idea } from "@/types";
+import type { Idea, IdeaStatus } from "@/types";
 import { NICHE_EMOJI, STATUS_BADGE } from "@/types";
 import ScoreRing from "./ScoreRing";
 import ScoreBars from "./ScoreBars";
@@ -12,6 +11,28 @@ import ScriptPanel from "./ScriptPanel";
 import ProductionPanel from "./ProductionPanel";
 import ActionButtons from "./ActionButtons";
 import Image from "next/image";
+import StageProgress, { Spinner } from "./StageProgress";
+
+// ── Statuses where the pipeline is actively running ───────────────
+const WORKING_STATUSES = new Set<IdeaStatus>([
+	"approved",
+	"generating_voice",
+	"generating_video",
+	"adding_captions",
+	"uploading",
+]);
+
+// ── Statuses after which music can no longer be changed ───────────
+const MUSIC_LOCKED_STATUSES = new Set<IdeaStatus>([
+	"generating_video",
+	"adding_captions",
+	"produced",
+	"changes_requested",
+	"ready_to_publish",
+	"scheduled",
+	"uploading",
+	"published",
+]);
 
 interface Props {
 	idea: Idea;
@@ -24,10 +45,21 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 	const [open, setOpen] = useState(false);
 	const [local, setLocal] = useState(idea);
 
+	// Sync when realtime pushes an update from outside
+	if (
+		idea.status !== local.status ||
+		idea.scenes_status !== local.scenes_status
+	) {
+		setLocal(idea);
+	}
+
 	const badge = STATUS_BADGE[local.status] ?? {
 		color: "var(--muted)",
 		label: local.status,
 	};
+	const isWorking = WORKING_STATUSES.has(local.status);
+	const musicLocked = MUSIC_LOCKED_STATUSES.has(local.status);
+
 	const scoreColor =
 		local.viral_score == null
 			? "var(--muted)"
@@ -85,6 +117,9 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 				</div>
 
 				<div className="flex items-center gap-2.5 shrink-0">
+					{/* Spinner in header when working */}
+					{isWorking && <Spinner color={badge.color} />}
+
 					<Badge
 						className="text-xs px-1.5 py-0.5"
 						style={{
@@ -125,10 +160,17 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 							durationSec={local.script_duration_sec}
 							musicTrack={local.music_track}
 							currentMusicUrl={local.music_url}
+							musicLocked={musicLocked}
 							onUpdate={handleUpdate}
 							onToast={onToast}
 						/>
 					</div>
+
+					{/* Stage progress indicator — driven by realtime */}
+					<StageProgress
+						status={local.status}
+						scenesStatus={local.scenes_status}
+					/>
 
 					<ProductionPanel
 						audioUrl={local.audio_url}
@@ -169,13 +211,16 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 						)}
 					</div>
 
-					<ActionButtons
-						ideaId={local.id}
-						status={local.status}
-						hasAudio={!!local.audio_url}
-						onResult={onToast}
-						onUpdate={handleUpdate}
-					/>
+					{/* Hide action buttons while actively working */}
+					{!isWorking && (
+						<ActionButtons
+							ideaId={local.id}
+							status={local.status}
+							hasAudio={!!local.audio_url}
+							onResult={onToast}
+							onUpdate={handleUpdate}
+						/>
+					)}
 				</div>
 			)}
 		</div>

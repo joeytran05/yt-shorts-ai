@@ -27,6 +27,7 @@ interface Props {
 	ideaId: string;
 	musicSuggestion: string | null;
 	currentMusicUrl: string | null;
+	locked: boolean;
 	onUpdate: (patch: Partial<Idea>) => void;
 	onToast: (msg: string, ok: boolean) => void;
 }
@@ -35,6 +36,7 @@ export function MusicSelector({
 	ideaId,
 	musicSuggestion,
 	currentMusicUrl,
+	locked,
 	onUpdate,
 	onToast,
 }: Props) {
@@ -44,7 +46,6 @@ export function MusicSelector({
 	const [loading, setLoading] = useState(false);
 	const [isPending, start] = useTransition();
 
-	// Load tracks on first expand using server action
 	useEffect(() => {
 		const fetchTracks = async () => {
 			setLoading(true);
@@ -56,6 +57,25 @@ export function MusicSelector({
 	}, []);
 
 	const selectedTrack = tracks.find((t) => t.url === currentMusicUrl);
+
+	// ── Locked state — just show what's selected, no interaction ──
+	if (locked) {
+		return (
+			<div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-surface border border-border">
+				<Music size={14} className="text-script shrink-0" />
+				<span className="text-xs flex-1 truncate text-script">
+					{selectedTrack
+						? `${selectedTrack.name} (${selectedTrack.mood})`
+						: currentMusicUrl
+							? "Auto-matched track"
+							: `Auto · ${musicSuggestion ?? "mood match"}`}
+				</span>
+				<span className="text-xs px-1.5 py-0.5 rounded bg-dim text-white">
+					🔒 Locked
+				</span>
+			</div>
+		);
+	}
 
 	const select = (trackId: string | null) =>
 		start(async () => {
@@ -84,7 +104,7 @@ export function MusicSelector({
 					border: `1px solid ${expanded ? "var(--border-active)" : "var(--border)"}`,
 				}}
 			>
-				<Music size={12} className="text-script shrink-0" />
+				<Music size={14} className="text-script shrink-0" />
 				<span className="text-xs flex-1 text-muted-fg">
 					{selectedTrack ? (
 						<>

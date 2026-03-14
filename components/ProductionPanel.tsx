@@ -18,7 +18,7 @@ const ProductionPanel = ({ audioUrl, videoUrl }: Props) => {
 			)}
 			{videoUrl && (
 				<div className="flex-1 rounded-lg p-3 bg-surface">
-					<p className="text-[10px] tracking-wide mb-2 text-prod">
+					<p className="text-xs tracking-wide mb-2 text-prod">
 						🎬 VIDEO
 					</p>
 					<video

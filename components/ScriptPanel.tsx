@@ -7,6 +7,7 @@ interface Props {
 	durationSec?: number | null;
 	musicTrack?: string | null; // GPT-5's suggestion
 	currentMusicUrl?: string | null; // saved music_url on idea
+	musicLocked: boolean;
 	onUpdate: (patch: Partial<Idea>) => void;
 	onToast: (msg: string, ok: boolean) => void;
 }
@@ -17,6 +18,7 @@ export default function ScriptPanel({
 	durationSec,
 	musicTrack,
 	currentMusicUrl,
+	musicLocked,
 	onUpdate,
 	onToast,
 }: Props) {
@@ -35,6 +37,7 @@ export default function ScriptPanel({
 				ideaId={ideaId}
 				musicSuggestion={musicTrack ?? null}
 				currentMusicUrl={currentMusicUrl ?? null}
+				locked={musicLocked}
 				onUpdate={onUpdate}
 				onToast={onToast}
 			/>
