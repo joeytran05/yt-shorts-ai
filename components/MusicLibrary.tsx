@@ -99,7 +99,7 @@ export function MusicLibrary({ initial }: { initial: Track[] }) {
 						size="sm"
 						disabled={isPending}
 						onClick={() => fileRef.current?.click()}
-						className="bg-script text-white"
+						className="bg-script text-white hover:bg-script/90"
 						type="button"
 					>
 						<Upload size={12} className="mr-1.5" />

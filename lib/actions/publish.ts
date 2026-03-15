@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getIdea, setStatus, updateIdea } from "@/lib/supabase";
 import { rewriteSEO } from "@/lib/ai";
 import type { ActionResult, Idea } from "@/types";
-import { getYouTubeAccessToken } from "../youtube-auth";
+import {
+	getYouTubeAccessToken,
+	getYouTubeAccessTokenForChannel,
+} from "../youtube-auth";
+import { getChannelForNiche } from "./channels";
 
 export async function scheduleUpload(
 	ideaId: string,
@@ -35,7 +39,13 @@ export async function uploadToYouTube(
 	if (!idea?.final_video_url)
 		return { ok: false, error: "No video file ready" };
 
-	const accessToken = await getYouTubeAccessToken();
+	// Use the channel-specific token if a channel is configured for this niche
+	const channel = idea.niche
+		? await getChannelForNiche(idea.niche)
+		: null;
+	const accessToken = channel?.refresh_token
+		? await getYouTubeAccessTokenForChannel(channel.refresh_token)
+		: await getYouTubeAccessToken();
 
 	if (!accessToken)
 		return { ok: false, error: "YOUTUBE_OAUTH_TOKEN not set" };

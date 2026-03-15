@@ -300,3 +300,13 @@ export interface Settings {
 	auto_approve_above: number | null;
 	updated_at: string;
 }
+
+export interface Channel {
+	id: string;
+	name: string;
+	niche: NicheType;
+	yt_channel_id: string | null;
+	yt_channel_name: string | null;
+	yt_channel_thumbnail: string | null;
+	created_at: string;
+}
