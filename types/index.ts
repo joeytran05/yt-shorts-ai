@@ -118,6 +118,12 @@ export interface Idea {
 	scheduled_at: string | null;
 	published_at: string | null;
 
+	// Performance metrics (fetched from YouTube API post-publish)
+	yt_views: number | null;
+	yt_likes: number | null;
+	yt_comments: number | null;
+	yt_metrics_fetched_at: string | null;
+
 	review_notes: string | null;
 	rejection_reason: string | null;
 	status: IdeaStatus;

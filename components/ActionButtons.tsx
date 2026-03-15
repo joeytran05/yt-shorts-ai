@@ -20,11 +20,13 @@ import {
 	requestChanges,
 } from "@/lib/actions/production";
 import { scheduleUpload, uploadToYouTube } from "@/lib/actions/publish";
+import { fetchVideoMetrics } from "@/lib/actions/performance";
 
 interface Props {
 	ideaId: string;
 	status: IdeaStatus;
 	hasAudio: boolean;
+	hasPerformance: boolean;
 	onResult: (msg: string, ok: boolean) => void;
 	onUpdate: (patch: Partial<Idea>) => void;
 }
@@ -33,6 +35,7 @@ const ActionButtons = ({
 	ideaId,
 	status,
 	hasAudio,
+	hasPerformance,
 	onResult,
 	onUpdate,
 }: Props) => {
@@ -190,6 +193,22 @@ const ActionButtons = ({
 					onClick={() => run(() => uploadToYouTube(ideaId))}
 				>
 					🚀 Upload Now
+				</Button>
+			</div>
+		);
+
+	// PUBLISHED — refresh metrics from YouTube Analytics
+	if (status === "published")
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 border-t border-border">
+				<Button
+					size="sm"
+					variant="outline"
+					disabled={isPending}
+					className={`hover:bg-gray-800 text-muted ${hasPerformance ? "" : "animate-pulse"}`}
+					onClick={() => run(() => fetchVideoMetrics(ideaId))}
+				>
+					{isPending ? "⏳ Fetching…" : "📊 Refresh Metrics"}
 				</Button>
 			</div>
 		);

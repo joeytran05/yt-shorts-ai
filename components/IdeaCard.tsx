@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Idea, IdeaStatus } from "@/types";
 import { NICHE_EMOJI, STATUS_BADGE } from "@/types";
 import ScoreRing from "./ScoreRing";
-import ScoreBars from "./ScoreBars";
+import PerformancePanel, { getPerformanceTag } from "./PerformancePanel";
 import ScriptPanel from "./ScriptPanel";
 import ProductionPanel from "./ProductionPanel";
 import ActionButtons from "./ActionButtons";
@@ -75,6 +75,12 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 		onUpdate(updated);
 	};
 
+	// Performance tag — computed once before render (avoids impure Date.now() in JSX)
+	const perfTag =
+		local.status === "published" && local.yt_views != null
+			? getPerformanceTag(local.yt_views)
+			: null;
+
 	return (
 		<div
 			className={`rounded-xl overflow-hidden transition-all duration-150 border 
@@ -113,6 +119,25 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 						<span>📺 {local.source_channel}</span>
 						<span>👁 {fmt(local.source_views)}</span>
 						<span>👍 {fmt(local.source_likes)}</span>
+						{perfTag && (
+							<>
+								<span className="text-border">·</span>
+								<span className="font-semibold text-publish">
+									▶ {fmt(local.yt_views!)} views
+								</span>
+								{local.yt_likes != null && (
+									<span className="text-publish">
+										👍 {fmt(local.yt_likes)}
+									</span>
+								)}
+								<span
+									className="font-semibold"
+									style={{ color: perfTag.color }}
+								>
+									{perfTag.label}
+								</span>
+							</>
+						)}
 					</div>
 				</div>
 
@@ -147,12 +172,17 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 			{open && (
 				<div className="px-4 pb-5 pt-4 animate-slide-up border-t border-border">
 					<div className="grid grid-cols-2 gap-5">
-						<ScoreBars
+						<PerformancePanel
 							viral={local.viral_score}
 							hook={local.hook_score}
 							trend={local.trend_score}
 							competition={local.competition_score}
 							reasoning={local.ai_reasoning}
+							views={local.yt_views}
+							likes={local.yt_likes}
+							comments={local.yt_comments}
+							fetchedAt={local.yt_metrics_fetched_at}
+							publishedAt={local.published_at}
 						/>
 						<ScriptPanel
 							ideaId={local.id}
@@ -217,6 +247,7 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 							ideaId={local.id}
 							status={local.status}
 							hasAudio={!!local.audio_url}
+							hasPerformance={!!local.yt_views}
 							onResult={onToast}
 							onUpdate={handleUpdate}
 						/>
