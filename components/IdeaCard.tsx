@@ -247,6 +247,8 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 							ideaId={local.id}
 							status={local.status}
 							hasAudio={!!local.audio_url}
+							hasScript={!!local.script_full}
+							hasVideo={!!local.final_video_url}
 							hasPerformance={!!local.yt_views}
 							onResult={onToast}
 							onUpdate={handleUpdate}

@@ -66,6 +66,64 @@ export async function rejectIdea(
 	}
 }
 
+export async function retryIdea(
+	ideaId: string,
+): Promise<ActionResult<Idea>> {
+	try {
+		const idea = await getIdea(ideaId);
+		if (!idea) return { ok: false, error: "Idea not found" };
+
+		// Walk back to the last checkpoint that has data,
+		// so the user re-triggers only the step that failed.
+		let restoreStatus: Idea["status"];
+		if (!idea.script_full) {
+			restoreStatus = "scored"; // failed while scripting → re-approve
+		} else if (!idea.audio_url) {
+			restoreStatus = "scripted"; // failed before voice → retry voice
+		} else if (!idea.final_video_url) {
+			restoreStatus = "scripted"; // failed during render → retry video
+		} else {
+			restoreStatus = "ready_to_publish"; // failed during upload → retry upload
+		}
+
+		const updated = await updateIdea(ideaId, {
+			status: restoreStatus,
+			last_error: null,
+		});
+		revalidatePath("/dashboard");
+		return { ok: true, data: updated };
+	} catch (err) {
+		return {
+			ok: false,
+			error:
+				err instanceof Error
+					? err.message
+					: JSON.stringify(err, null, 2),
+		};
+	}
+}
+
+export async function restoreIdea(
+	ideaId: string,
+): Promise<ActionResult<Idea>> {
+	try {
+		const updated = await updateIdea(ideaId, {
+			status: "scored",
+			rejection_reason: null,
+		});
+		revalidatePath("/dashboard");
+		return { ok: true, data: updated };
+	} catch (err) {
+		return {
+			ok: false,
+			error:
+				err instanceof Error
+					? err.message
+					: JSON.stringify(err, null, 2),
+		};
+	}
+}
+
 export async function updateScript(
 	ideaId: string,
 	patch: Partial<Idea>,

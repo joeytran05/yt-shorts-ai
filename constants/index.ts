@@ -36,4 +36,10 @@ export const STAGE_GROUPS = [
 		color: "var(--publish)",
 		statuses: ["scheduled", "uploading", "published"] as IdeaStatus[],
 	},
+	{
+		id: "archive",
+		label: "🗂 Archive",
+		color: "var(--muted)",
+		statuses: ["rejected", "failed"] as IdeaStatus[],
+	},
 ] as const;

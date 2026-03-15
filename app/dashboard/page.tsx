@@ -16,6 +16,7 @@ const STAGE_ICONS: Record<string, string> = {
 	produce: "🎬",
 	review: "👀",
 	publish: "🚀",
+	archive: "🗂",
 };
 
 interface Props {
@@ -27,10 +28,21 @@ const DashboardPage = async ({ searchParams }: Props) => {
 	const stageGroup =
 		STAGE_GROUPS.find((s) => s.id === stage) ?? STAGE_GROUPS[0];
 
-	const [ideas, counts] = await Promise.all([
+	const [rawIdeas, counts] = await Promise.all([
 		getIdeas(stageGroup.statuses as IdeaStatus[]),
 		getPipelineCounts(),
 	]);
+
+	// In the archive: failed ideas surface first (they need attention),
+	// then rejected ideas below.
+	const ideas =
+		stage === "archive"
+			? [...rawIdeas].sort((a, b) => {
+					if (a.status === "failed" && b.status !== "failed") return -1;
+					if (a.status !== "failed" && b.status === "failed") return 1;
+					return 0;
+				})
+			: rawIdeas;
 
 	return (
 		<>
@@ -77,10 +89,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 							{stageGroup.label}
 						</span>
 						<span className="text-xs ml-2.5 text-muted">
-							{
-								ideas.filter((i) => i.status !== "rejected")
-									.length
-							}{" "}
+							{stage === "archive" ? ideas.length : ideas.filter((i) => i.status !== "rejected" && i.status !== "failed").length}{" "}
 							ideas
 						</span>
 					</div>

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { ELEVENLABS_VOICES, OPTIMAL_UPLOAD_TIMES } from "@/types";
 import type { IdeaStatus, Idea } from "@/types";
-import { approveIdea, rejectIdea } from "@/lib/actions/script";
+import { approveIdea, rejectIdea, restoreIdea, retryIdea } from "@/lib/actions/script";
 import {
 	approveProducedVideo,
 	generateVideo,
@@ -26,6 +26,8 @@ interface Props {
 	ideaId: string;
 	status: IdeaStatus;
 	hasAudio: boolean;
+	hasScript: boolean;
+	hasVideo: boolean;
 	hasPerformance: boolean;
 	onResult: (msg: string, ok: boolean) => void;
 	onUpdate: (patch: Partial<Idea>) => void;
@@ -35,6 +37,8 @@ const ActionButtons = ({
 	ideaId,
 	status,
 	hasAudio,
+	hasScript,
+	hasVideo,
 	hasPerformance,
 	onResult,
 	onUpdate,
@@ -193,6 +197,45 @@ const ActionButtons = ({
 					onClick={() => run(() => uploadToYouTube(ideaId))}
 				>
 					🚀 Upload Now
+				</Button>
+			</div>
+		);
+
+	// FAILED — retry from the last successful checkpoint
+	if (status === "failed") {
+		const retryLabel = !hasScript
+			? "↺ Retry Scripting"
+			: !hasAudio
+				? "↺ Retry Voice"
+				: !hasVideo
+					? "↺ Retry Video Render"
+					: "↺ Retry Upload";
+
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 border-t border-border">
+				<Button
+					size="sm"
+					disabled={isPending}
+					className="bg-danger text-white hover:bg-danger/90 font-semibold"
+					onClick={() => run(() => retryIdea(ideaId))}
+				>
+					{isPending ? "⏳ Retrying…" : retryLabel}
+				</Button>
+			</div>
+		);
+	}
+
+	// ARCHIVE — restore a rejected idea back to the Discover stage
+	if (status === "rejected")
+		return (
+			<div className="flex items-center gap-2 pt-3.5 mt-3.5 border-t border-border">
+				<Button
+					size="sm"
+					disabled={isPending}
+					className="bg-score text-black hover:bg-score/90 font-semibold"
+					onClick={() => run(() => restoreIdea(ideaId))}
+				>
+					{isPending ? "⏳ Restoring…" : "↩ Restore to Discover"}
 				</Button>
 			</div>
 		);
