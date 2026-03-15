@@ -24,12 +24,13 @@ export async function fetchPexelsClip(
 	query: string,
 	minDurationSec = 4,
 	attempt = 0,
+	usedIds?: Set<string>,
 ): Promise<PexelsClip | null> {
 	const params = new URLSearchParams({
 		query,
 		orientation: "portrait",
 		size: "medium",
-		per_page: "10",
+		per_page: "15",
 	});
 
 	let res: Response;
@@ -44,7 +45,7 @@ export async function fetchPexelsClip(
 	if (res.status === 429) {
 		if (attempt < 1) {
 			await sleep(2000);
-			return fetchPexelsClip(query, minDurationSec, 1);
+			return fetchPexelsClip(query, minDurationSec, 1, usedIds);
 		}
 		return null;
 	}
@@ -56,25 +57,29 @@ export async function fetchPexelsClip(
 	if (!data.videos?.length) {
 		const fallback = query.split(" ")[0];
 		if (attempt === 0 && fallback !== query)
-			return fetchPexelsClip(fallback, minDurationSec, 1);
+			return fetchPexelsClip(fallback, minDurationSec, 1, usedIds);
 		return null;
 	}
 
 	for (const video of data.videos) {
 		if (video.duration < minDurationSec) continue;
+		// Skip clips already used in other scenes
+		if (usedIds?.has(String(video.id))) continue;
 		const file = pickBestFile(video.video_files);
 		if (!file) continue;
-		return {
+		const clip: PexelsClip = {
 			id: String(video.id),
 			url: file.link,
 			width: file.width,
 			height: file.height,
 			duration: video.duration,
 		};
+		usedIds?.add(clip.id);
+		return clip;
 	}
 
 	if (attempt === 0 && minDurationSec > 2)
-		return fetchPexelsClip(query, 2, 1);
+		return fetchPexelsClip(query, 2, 1, usedIds);
 
 	return null;
 }
@@ -86,11 +91,15 @@ export async function fetchAllClips(
 	const result = new Map<number, PexelsClip | null>();
 	const allocSec = totalDurationSec / scenes.length;
 	const minDur = Math.max(2, Math.round(allocSec - 1));
+	// Shared set to prevent the same Pexels video appearing in multiple scenes
+	const usedIds = new Set<string>();
 
 	for (let i = 0; i < scenes.length; i += 4) {
 		const batch = scenes.slice(i, i + 4);
+		// Batches run concurrently but share usedIds — race is acceptable
+		// (worst case: two scenes get the same clip; sequential retry prevents it)
 		const settled = await Promise.allSettled(
-			batch.map((s) => fetchPexelsClip(s.visual_query, minDur)),
+			batch.map((s) => fetchPexelsClip(s.visual_query, minDur, 0, usedIds)),
 		);
 		batch.forEach((s, j) => {
 			const r = settled[j];

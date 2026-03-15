@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { planScenes } from "./scene-planner";
 import { fetchAllClips } from "./pexels";
-import { generateCaptions } from "./captions"; // ← new
+import { generateWordCaptions } from "./captions";
 import { renderShortsVideo } from "./renderer";
 import type { VideoScene, SceneData } from "../types/scenes";
 import type { Idea } from "../types";
@@ -131,7 +131,7 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 	console.log("[pipeline] C: Clip server + captions + music in parallel…");
 	const [clipServer, captions, musicUrl] = await Promise.all([
 		startClipServer(timed),
-		generateCaptions(idea.audio_url!),
+		generateWordCaptions(idea.audio_url!),
 		idea.music_url ?? // manually selected - use directly
 			(await fetchBackgroundMusic(
 				idea.music_track ?? "background",
@@ -144,18 +144,34 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 		await patch(ideaId, { music_url: musicUrl });
 	}
 
+	// Use the actual audio length from Whisper timestamps as ground truth.
+	// script_duration_sec is only an AI estimate — the real ElevenLabs audio
+	// can be longer, which would cut the video short if we used the estimate.
+	const audioDurationSec =
+		captions.length > 0
+			? captions[captions.length - 1].endMs / 1000 + 0.5 // +0.5s tail buffer
+			: durationSec;
+	const renderDurationSec = Math.max(durationSec, audioDurationSec);
+
 	console.log(
-		`[pipeline] C: ${captions.length} captions, rendering ${clipServer.scenes.length} scenes…, music: ${musicUrl ? "✓" : "none"}`,
+		`[pipeline] C: ${captions.length} captions, audio=${audioDurationSec.toFixed(1)}s, render=${renderDurationSec.toFixed(1)}s, ` +
+		`scenes=${clipServer.scenes.length}, music=${musicUrl ? "✓" : "none"}`,
+	);
+
+	// Re-time scenes to fill the actual audio duration
+	const timedFinal = buildTimedScenes(
+		clipServer.scenes,
+		renderDurationSec,
 	);
 
 	let rawBuffer: Buffer;
 	try {
 		rawBuffer = await renderShortsVideo({
-			scenes: clipServer.scenes, // local http:// URLs
+			scenes: timedFinal,
 			audioUrl: idea.audio_url!,
 			captions,
 			musicUrl,
-			totalDurationSec: durationSec,
+			totalDurationSec: renderDurationSec,
 		});
 	} finally {
 		// Always shut down server + clean up regardless of render outcome

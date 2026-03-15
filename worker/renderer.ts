@@ -6,7 +6,7 @@ import { renderMedia, selectComposition } from "@remotion/renderer";
 import type {
 	ShortsCompositionProps,
 	VideoScene,
-	CaptionEntry,
+	WordCaption,
 } from "../types/scenes";
 
 const FPS = 30;
@@ -26,7 +26,7 @@ async function getBundle(): Promise<string> {
 export async function renderShortsVideo(input: {
 	scenes: VideoScene[];
 	audioUrl: string;
-	captions: CaptionEntry[];
+	captions: WordCaption[];
 	musicUrl: string | null;
 	totalDurationSec: number;
 }): Promise<Buffer> {
@@ -59,7 +59,7 @@ export async function renderShortsVideo(input: {
 		inputProps: props,
 		imageFormat: "jpeg",
 		jpegQuality: 88,
-		concurrency: 2,
+		concurrency: 1,
 		timeoutInMilliseconds: 180_000,
 		// Cap how much decoded video Remotion keeps in memory at once
 		// Default is unlimited — 256MB prevents 4K frames from piling up

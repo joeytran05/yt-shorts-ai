@@ -20,11 +20,18 @@ export interface SceneData {
 	scenes: VideoScene[];
 }
 
-// Caption entry from Whisper SRT (parsed)
+// Caption entry from Whisper SRT (parsed) — kept for reference
 export interface CaptionEntry {
 	startMs: number;
 	endMs: number;
 	text: string;
+}
+
+// Word-level caption from Whisper verbose_json — used for TikTok-style rendering
+export interface WordCaption {
+	word: string;
+	startMs: number;
+	endMs: number;
 }
 
 export interface VideoRenderJob {
@@ -44,7 +51,7 @@ export interface PgmqMessage<T = unknown> {
 export interface ShortsCompositionProps {
 	scenes: VideoScene[];
 	audioUrl: string;
-	captions: CaptionEntry[]; // ← parsed from Whisper SRT
+	captions: WordCaption[]; // ← word-level from Whisper verbose_json
 	musicUrl: string | null;
 	fps: number;
 	[key: string]: unknown; // ← makes it compatible with Record<string, unknown>
