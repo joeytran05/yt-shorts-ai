@@ -149,7 +149,9 @@ export async function generateScript(idea: Idea): Promise<ScriptResult> {
 
 			VIDEO IDEA
 			Title: ${idea.title}
-			Source: ${idea.source_url}
+			${idea.description ? `Description: ${idea.description}` : ""}
+			${idea.script_hook ? `Suggested hook: ${idea.script_hook}` : ""}
+			${idea.source_url ? `Source: ${idea.source_url}` : "Source: manual idea (no source video — create original content)"}
 
 			SCRIPT STRUCTURE
 
@@ -214,6 +216,62 @@ export async function rewriteSEO(idea: Idea) {
 
 			Make the title irresistible. Description should tease value + soft CTA.
 			Tags should be specific to the content. Include trending hashtags.`,
+	});
+
+	return output;
+}
+
+// ── Generate idea from a user prompt ────────────────────────────
+
+const IdeaPromptSchema = z.object({
+	title: z.string().max(100),
+	hook: z.string().max(120),
+	description: z.string().max(300),
+	tags: z.array(z.string()).max(8),
+	niche: z.enum([
+		"life_hacks",
+		"funny_fails",
+		"motivation",
+		"tech_tips",
+		"diy",
+		"asmr",
+		"fitness",
+		"finance",
+		"food",
+		"travel",
+		"gaming",
+		"beauty",
+		"pets",
+		"education",
+		"news",
+		"other",
+	]),
+});
+
+export type IdeaPromptResult = z.infer<typeof IdeaPromptSchema>;
+
+export async function generateIdeaFromPrompt(
+	prompt: string,
+	preferredNiche?: string,
+): Promise<IdeaPromptResult> {
+	const { output } = await generateText({
+		model: openai(MODEL),
+		output: Output.object({ schema: IdeaPromptSchema }),
+		prompt: `You are a YouTube Shorts idea generator specializing in viral content.
+
+			Given the concept below, produce a punchy short video idea optimized for maximum views and retention.
+
+			CONCEPT: ${prompt}
+			${preferredNiche ? `PREFERRED NICHE: ${preferredNiche}` : ""}
+
+			Rules:
+			- title: scroll-stopping, under 70 chars, curiosity-driven
+			- hook: the first 3-second spoken line — under 12 words, must create curiosity or shock
+			- description: 1–2 sentences about what the video covers (voiceover summary)
+			- tags: 4–8 short keyword tags relevant to the content
+			- niche: best-fit category
+
+			Return STRICT JSON only.`,
 	});
 
 	return output;

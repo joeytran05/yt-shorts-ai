@@ -83,6 +83,42 @@ export async function searchViralShorts(
 		}));
 }
 
+/**
+ * Fetch metadata for a single YouTube video by ID.
+ * Used by the manual "Add by URL" flow.
+ */
+export async function fetchSingleVideo(
+	videoId: string,
+): Promise<Partial<Idea> | null> {
+	const vp = new URLSearchParams({
+		part: "snippet,statistics",
+		id: videoId,
+		key: KEY(),
+	});
+	const vr = await fetch(`${YT}/videos?${vp}`);
+	if (!vr.ok) throw new Error(`YT Videos failed: ${vr.status}`);
+	const vd = await vr.json();
+
+	const v: YTVideoResponse | undefined = vd.items?.[0];
+	if (!v) return null;
+
+	return {
+		source: "youtube" as const,
+		source_video_id: v.id,
+		source_url: `https://www.youtube.com/shorts/${v.id}`,
+		source_channel: v.snippet.channelTitle,
+		source_views: parseInt(v.statistics?.viewCount ?? "0"),
+		source_likes: parseInt(v.statistics?.likeCount ?? "0"),
+		source_comments: parseInt(v.statistics?.commentCount ?? "0"),
+		title: v.snippet.title,
+		description: v.snippet.description?.slice(0, 500) ?? null,
+		thumbnail_url: v.snippet.thumbnails?.high?.url ?? null,
+		tags: v.snippet.tags?.slice(0, 10) ?? [],
+		status: "discovered" as const,
+		content_hash: md5(`${v.id}:${v.snippet.title}`),
+	};
+}
+
 export async function runFullDiscovery(
 	queries: string[],
 	options: { minViews?: number; perQuery?: number } = {},

@@ -6,6 +6,7 @@ import PipelineStrip from "@/components/PipelineStrip";
 import IdeaList from "@/components/IdeaList";
 import { STAGE_GROUPS } from "@/constants";
 import DiscoverButton from "@/components/DiscoverButton";
+import AddIdeaPanel from "@/components/AddIdeaPanel";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				</Suspense>
 
 				<DiscoverButton />
+				<AddIdeaPanel />
 
 				<Button variant="outline" className="hover:bg-neutral-800">
 					<Link
