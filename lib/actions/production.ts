@@ -85,7 +85,7 @@ export async function generateVoiceover(
 // Enqueue job → Railway worker handles the rest asynchronously
 export async function generateVideo(
 	ideaId: string,
-): Promise<ActionResult<{ job_queued: boolean; msg_id: string }>> {
+): Promise<ActionResult<Idea>> {
 	const idea = await getIdea(ideaId);
 	if (!idea) return { ok: false, error: "Idea not found" };
 	if (!idea.audio_url)
@@ -95,7 +95,7 @@ export async function generateVideo(
 	try {
 		const msgId = await enqueueVideoRender(ideaId, "normal");
 
-		await updateIdea(ideaId, {
+		const updated = await updateIdea(ideaId, {
 			status: "generating_video",
 			scenes_status: "none",
 			render_job_id: Number(msgId),
@@ -103,7 +103,7 @@ export async function generateVideo(
 		});
 
 		revalidatePath("/dashboard");
-		return { ok: true, data: { job_queued: true, msg_id: String(msgId) } };
+		return { ok: true, data: updated };
 	} catch (err) {
 		const error =
 			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
@@ -138,14 +138,14 @@ export async function approveProducedVideo(
 export async function requestChanges(
 	ideaId: string,
 	notes: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<Idea>> {
 	try {
-		await updateIdea(ideaId, {
+		const updated = await updateIdea(ideaId, {
 			status: "changes_requested",
 			review_notes: notes,
 		});
 		revalidatePath("/dashboard");
-		return { ok: true, data: undefined };
+		return { ok: true, data: updated };
 	} catch (err) {
 		return {
 			ok: false,

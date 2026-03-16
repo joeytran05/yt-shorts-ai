@@ -47,13 +47,14 @@ export async function approveIdea(ideaId: string): Promise<ActionResult<Idea>> {
 export async function rejectIdea(
 	ideaId: string,
 	reason?: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<Idea>> {
 	try {
-		await setStatus(ideaId, "rejected", {
+		const updated = await updateIdea(ideaId, {
+			status: "rejected",
 			rejection_reason: reason ?? null,
 		});
 		revalidatePath("/dashboard");
-		return { ok: true, data: undefined };
+		return { ok: true, data: updated };
 	} catch (err) {
 		console.error("FULL ERROR:", err);
 		return {

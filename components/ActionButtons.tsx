@@ -12,7 +12,12 @@ import {
 } from "@/components/ui/select";
 import { ELEVENLABS_VOICES, OPTIMAL_UPLOAD_TIMES } from "@/types";
 import type { IdeaStatus, Idea } from "@/types";
-import { approveIdea, rejectIdea, restoreIdea, retryIdea } from "@/lib/actions/script";
+import {
+	approveIdea,
+	rejectIdea,
+	restoreIdea,
+	retryIdea,
+} from "@/lib/actions/script";
 import {
 	approveProducedVideo,
 	generateVideo,
@@ -49,7 +54,11 @@ const ActionButtons = ({
 	const [scheduleTime, setScheduleTime] = useState("");
 
 	const run = (
-		fn: () => Promise<{ ok: boolean; error?: string; data?: unknown }>,
+		fn: () => Promise<{
+			ok: boolean;
+			error?: string;
+			data?: Partial<Idea>;
+		}>,
 	) =>
 		startTransition(async () => {
 			const result = await fn();
@@ -125,6 +134,7 @@ const ActionButtons = ({
 						size="sm"
 						variant="outline"
 						disabled={isPending}
+						className="hover:bg-gray-800"
 						onClick={() => run(() => generateVideo(ideaId))}
 					>
 						🎬 Generate Video

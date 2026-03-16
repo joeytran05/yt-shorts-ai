@@ -34,15 +34,13 @@ export async function scheduleUpload(
 
 export async function uploadToYouTube(
 	ideaId: string,
-): Promise<ActionResult<{ yt_url: string }>> {
+): Promise<ActionResult<Idea>> {
 	const idea = await getIdea(ideaId);
 	if (!idea?.final_video_url)
 		return { ok: false, error: "No video file ready" };
 
 	// Use the channel-specific token if a channel is configured for this niche
-	const channel = idea.niche
-		? await getChannelForNiche(idea.niche)
-		: null;
+	const channel = idea.niche ? await getChannelForNiche(idea.niche) : null;
 	const accessToken = channel?.refresh_token
 		? await getYouTubeAccessTokenForChannel(channel.refresh_token)
 		: await getYouTubeAccessToken();
@@ -119,14 +117,14 @@ export async function uploadToYouTube(
 		const yt_video_id = ytData.id as string;
 		const yt_url = `https://www.youtube.com/shorts/${yt_video_id}`;
 
-		await updateIdea(ideaId, {
+		const updated = await updateIdea(ideaId, {
 			status: "published",
 			yt_video_id,
 			yt_url,
 			published_at: new Date().toISOString(),
 		});
 		revalidatePath("/dashboard");
-		return { ok: true, data: { yt_url } };
+		return { ok: true, data: updated };
 	} catch (err) {
 		const error =
 			err instanceof Error ? err.message : JSON.stringify(err, null, 2);

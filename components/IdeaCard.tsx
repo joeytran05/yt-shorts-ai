@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Idea, IdeaStatus } from "@/types";
 import { NICHE_EMOJI, STATUS_BADGE } from "@/types";
+import { STAGE_GROUPS } from "@/constants";
 import ScoreRing from "./ScoreRing";
 import PerformancePanel, { getPerformanceTag } from "./PerformancePanel";
 import ScriptPanel from "./ScriptPanel";
 import ProductionPanel from "./ProductionPanel";
 import ActionButtons from "./ActionButtons";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import StageProgress, { Spinner } from "./StageProgress";
 
@@ -34,15 +37,38 @@ const MUSIC_LOCKED_STATUSES = new Set<IdeaStatus>([
 	"published",
 ]);
 
+/** Map any status to its stage id (from STAGE_GROUPS). */
+function statusToStage(status: IdeaStatus): string {
+	for (const sg of STAGE_GROUPS) {
+		if ((sg.statuses as readonly string[]).includes(status)) return sg.id;
+	}
+	return "discover";
+}
+
 interface Props {
 	idea: Idea;
 	stageColor: string;
 	onUpdate: (updated: Idea) => void;
 	onToast: (msg: string, ok: boolean) => void;
+	/** Whether this card is currently checked in multi-select mode. */
+	selected?: boolean;
+	/** Called when the checkbox is toggled. */
+	onToggleSelect?: () => void;
+	/** Auto-expand the card on mount (used after navigate-and-focus). */
+	defaultOpen?: boolean;
 }
 
-const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
-	const [open, setOpen] = useState(false);
+const IdeaCard = ({
+	idea,
+	stageColor,
+	onUpdate,
+	onToast,
+	selected,
+	onToggleSelect,
+	defaultOpen,
+}: Props) => {
+	const router = useRouter();
+	const [open, setOpen] = useState(defaultOpen ?? false);
 	const [local, setLocal] = useState(idea);
 
 	// Sync when realtime pushes an update from outside
@@ -73,6 +99,19 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 		const updated = { ...local, ...patch } as Idea;
 		setLocal(updated);
 		onUpdate(updated);
+
+		// Navigate to the stage that owns the new status (if it changed stages)
+		if (patch.status && patch.status !== local.status) {
+			const currentStage = statusToStage(local.status);
+			const newStage = statusToStage(patch.status);
+			// Don't navigate if the new stage is the same as the current or if it's "archive"
+			if (newStage !== currentStage && newStage !== "archive") {
+				// Include ?expand=<id> so the card auto-opens on the destination stage
+				router.push(`/dashboard?stage=${newStage}&expand=${local.id}`, {
+					scroll: false,
+				});
+			}
+		}
 	};
 
 	// Performance tag — computed once before render (avoids impure Date.now() in JSX)
@@ -83,8 +122,8 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 
 	return (
 		<div
-			className={`rounded-xl overflow-hidden transition-all duration-150 border 
-				${open ? "opacity-100 bg-card-hover border-border-active" : "bg-card border-border"} 
+			className={`rounded-xl overflow-hidden transition-all duration-150 border
+				${open ? "opacity-100 bg-card-hover border-border-active" : "bg-card border-border"}
 				${local.status === "rejected" ? "opacity-35" : ""}`}
 			style={{
 				borderLeft: `3px solid ${stageColor}`,
@@ -95,6 +134,20 @@ const IdeaCard = ({ idea, stageColor, onUpdate, onToast }: Props) => {
 				className="flex items-center gap-3 px-4 py-3 cursor-pointer"
 				onClick={() => setOpen((o) => !o)}
 			>
+				{/* Multi-select checkbox */}
+				{onToggleSelect && (
+					<div
+						className="shrink-0 flex items-center"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<Checkbox
+							checked={selected ?? false}
+							onCheckedChange={() => onToggleSelect()}
+							className="cursor-pointer"
+						/>
+					</div>
+				)}
+
 				{local.thumbnail_url ? (
 					<>
 						<Image

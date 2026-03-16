@@ -21,11 +21,12 @@ const STAGE_ICONS: Record<string, string> = {
 };
 
 interface Props {
-	searchParams: Promise<{ stage?: string }>;
+	searchParams: Promise<{ stage?: string; expand?: string }>;
 }
 
 const DashboardPage = async ({ searchParams }: Props) => {
-	const stage = (await searchParams).stage ?? "discover";
+	const { stage: rawStage, expand } = await searchParams;
+	const stage = rawStage ?? "discover";
 	const stageGroup =
 		STAGE_GROUPS.find((s) => s.id === stage) ?? STAGE_GROUPS[0];
 
@@ -102,6 +103,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 					stageColor={stageGroup.color}
 					stageLabel={stageGroup.label}
 					emptyIcon={STAGE_ICONS[stage] ?? "📌"}
+					expandId={expand}
 				/>
 			</main>
 		</>
