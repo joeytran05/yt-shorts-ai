@@ -1,12 +1,18 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 import { runVideoPipeline } from "./video-pipeline";
+import { checkScheduledUploads } from "./scheduler";
 import type { VideoRenderJob, PgmqMessage } from "../types/scenes";
 
 const QUEUE_NAME = "video_render_queue";
 const POLL_INTERVAL_MS = 3_000;
 const VISIBILITY_TIMEOUT_SEC = 360;
 const MAX_ATTEMPTS = 3;
+
+/** How often to check for scheduled uploads (ms).
+ *  Upload slots are spaced ≥1 hour apart, so 5-minute checks
+ *  guarantee an upload fires within 5 min of its scheduled time. */
+const SCHEDULE_CHECK_INTERVAL_MS = 5 * 60_000; // 5 minutes
 
 function db() {
 	return createClient(
@@ -50,9 +56,20 @@ async function markFailed(ideaId: string, error: string) {
 async function poll() {
 	console.log("[worker] Started —", new Date().toISOString());
 	let idle = 0;
+	let lastScheduleCheck = 0;
 
 	while (true) {
 		try {
+			// ── Scheduled upload check (throttled to once per minute) ──
+			const now = Date.now();
+			if (now - lastScheduleCheck >= SCHEDULE_CHECK_INTERVAL_MS) {
+				lastScheduleCheck = now;
+				checkScheduledUploads().catch((err) =>
+					console.error("[scheduler] Unexpected error:", err),
+				);
+			}
+
+			// ── Video render queue ─────────────────────────────────────
 			const msg = await readNextJob();
 
 			if (!msg) {

@@ -284,11 +284,19 @@ export const ELEVENLABS_VOICES = [
 	{ id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily (UK Female)" },
 ];
 
+// Optimal YouTube Shorts upload windows based on US/global engagement data.
+// Labels show EST (UTC-5) + UTC. Peak slots marked with ⭐.
 export const OPTIMAL_UPLOAD_TIMES = [
-	{ label: "12 PM UTC (7AM EST)", utc_hour: 12 },
-	{ label: "2 PM UTC (9AM EST)", utc_hour: 14 },
-	{ label: "6 PM UTC (1PM EST)", utc_hour: 18 },
-	{ label: "8 PM UTC (3PM EST)", utc_hour: 20 },
+	{ label: "7 AM EST · 12 UTC — Morning commute", utc_hour: 12 },
+	{ label: "9 AM EST · 14 UTC — Late morning", utc_hour: 14 },
+	{ label: "11 AM EST · 16 UTC — Pre-lunch", utc_hour: 16 },
+	{ label: "12 PM EST · 17 UTC ⭐ Lunch peak", utc_hour: 17 },
+	{ label: "2 PM EST · 19 UTC — Afternoon", utc_hour: 19 },
+	{ label: "3 PM EST · 20 UTC ⭐ After school", utc_hour: 20 },
+	{ label: "5 PM EST · 22 UTC ⭐ After work", utc_hour: 22 },
+	{ label: "7 PM EST · 0 UTC  ⭐ Prime time", utc_hour: 0 },
+	{ label: "9 PM EST · 2 UTC  ⭐ Peak evening", utc_hour: 2 },
+	{ label: "11 PM EST · 4 UTC — Late night", utc_hour: 4 },
 ];
 
 export interface YoutubeQuery {

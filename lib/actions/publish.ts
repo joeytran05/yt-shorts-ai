@@ -9,6 +9,7 @@ import {
 	getYouTubeAccessTokenForChannel,
 } from "../youtube-auth";
 import { getChannelForNiche } from "./channels";
+import { performYouTubeUpload } from "@/lib/youtube-upload";
 
 export async function scheduleUpload(
 	ideaId: string,
@@ -52,70 +53,10 @@ export async function uploadToYouTube(
 	revalidatePath("/dashboard");
 
 	try {
-		const videoRes = await fetch(idea.final_video_url);
-		const videoBlob = await videoRes.blob();
-		const title = (idea.seo_title ?? idea.title).slice(0, 100);
-		const description = [
-			idea.seo_description ?? "",
-			"",
-			idea.seo_hashtags?.join(" ") ?? "",
-		]
-			.join("\n")
-			.trim();
-		const tags = [...(idea.seo_tags ?? []), "Shorts", "viral"].slice(
-			0,
-			500,
+		const { yt_video_id, yt_url } = await performYouTubeUpload(
+			idea,
+			accessToken,
 		);
-
-		const initRes = await fetch(
-			"https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-					"Content-Type": "application/json",
-					"X-Upload-Content-Type": "video/mp4",
-					"X-Upload-Content-Length": String(videoBlob.size),
-				},
-				body: JSON.stringify({
-					snippet: {
-						title,
-						description,
-						tags,
-						categoryId: "22",
-						defaultLanguage: "en",
-					},
-					status: {
-						privacyStatus: "public",
-						selfDeclaredMadeForKids: false,
-					},
-				}),
-			},
-		);
-		if (!initRes.ok)
-			throw new Error(
-				`YT init ${initRes.status}: ${await initRes.text()}`,
-			);
-
-		const uploadUrl = initRes.headers.get("Location");
-		if (!uploadUrl) throw new Error("No upload URL from YouTube");
-
-		const uploadRes = await fetch(uploadUrl, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "video/mp4",
-				"Content-Length": String(videoBlob.size),
-			},
-			body: videoBlob,
-		});
-		if (!uploadRes.ok)
-			throw new Error(
-				`YT upload ${uploadRes.status}: ${await uploadRes.text()}`,
-			);
-
-		const ytData = await uploadRes.json();
-		const yt_video_id = ytData.id as string;
-		const yt_url = `https://www.youtube.com/shorts/${yt_video_id}`;
 
 		const updated = await updateIdea(ideaId, {
 			status: "published",
