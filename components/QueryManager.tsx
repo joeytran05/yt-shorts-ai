@@ -1,18 +1,27 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { YoutubeQuery } from "@/types";
+import type { PlanType } from "@/lib/quota";
+import { PLAN_LIMITS } from "@/lib/quota";
 import { saveQueries } from "@/lib/actions/settings";
 import { toastMessage } from "@/lib/utils";
 
-export function QueryManager({ initial }: { initial: YoutubeQuery[] }) {
+interface Props {
+	initial: YoutubeQuery[];
+	userPlan: PlanType;
+}
+
+export function QueryManager({ initial, userPlan }: Props) {
 	const [queries, setQueries] = useState<YoutubeQuery[]>(initial);
 	const [newQuery, setNewQuery] = useState("");
 	const [isPending, start] = useTransition();
+
+	const canCustomize = PLAN_LIMITS[userPlan].customQueries;
 
 	const toggle = (i: number) =>
 		setQueries((prev) =>
@@ -68,25 +77,44 @@ export function QueryManager({ initial }: { initial: YoutubeQuery[] }) {
 				</Button>
 			</div>
 
-			{/* Add new query */}
-			<div className="flex gap-2 mb-4">
-				<Input
-					value={newQuery}
-					onChange={(e) => setNewQuery(e.target.value)}
-					onKeyDown={(e) => e.key === "Enter" && add()}
-					placeholder="Add custom query…"
-					className="h-8 text-xs flex-1"
-				/>
-				<Button
-					size="sm"
-					variant="outline"
-					onClick={add}
-					disabled={!newQuery.trim()}
-					className="hover:bg-gray-700"
-				>
-					<Plus size={13} />
-				</Button>
-			</div>
+			{/* Add new query — locked for free plan */}
+			{canCustomize ? (
+				<div className="flex gap-2 mb-4">
+					<Input
+						value={newQuery}
+						onChange={(e) => setNewQuery(e.target.value)}
+						onKeyDown={(e) => e.key === "Enter" && add()}
+						placeholder="Add custom query…"
+						className="h-8 text-xs flex-1"
+					/>
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={add}
+						disabled={!newQuery.trim()}
+						className="hover:bg-gray-700"
+					>
+						<Plus size={13} />
+					</Button>
+				</div>
+			) : (
+				<div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg border border-border bg-dim">
+					<Lock size={13} className="text-muted shrink-0" />
+					<span className="text-xs text-muted flex-1">
+						Custom queries require Pro or Business
+					</span>
+					<button
+						onClick={() =>
+							document
+								.getElementById("billing")
+								?.scrollIntoView({ behavior: "smooth", block: "start" })
+						}
+						className="text-xs text-publish hover:underline shrink-0"
+					>
+						Upgrade →
+					</button>
+				</div>
+			)}
 
 			{/* Query list */}
 			<div className="flex flex-col gap-1.5">
@@ -120,12 +148,15 @@ export function QueryManager({ initial }: { initial: YoutubeQuery[] }) {
 								custom
 							</Badge>
 						)}
-						<button
-							onClick={() => remove(i)}
-							className="shrink-0 hover:opacity-75 transition-opacity"
-						>
-							<Trash2 size={14} className="text-danger" />
-						</button>
+						{/* Only allow removing custom queries (keep starter queries) */}
+						{q.custom && (
+							<button
+								onClick={() => remove(i)}
+								className="shrink-0 hover:opacity-75 transition-opacity"
+							>
+								<Trash2 size={14} className="text-danger" />
+							</button>
+						)}
 					</div>
 				))}
 			</div>

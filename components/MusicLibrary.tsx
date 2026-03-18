@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Trash2, Upload, Music } from "lucide-react";
+import { Trash2, Upload, Music, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toastMessage } from "@/lib/utils";
 import { deleteMusicTrack, uploadMusicTrack } from "@/lib/actions/settings";
+import type { PlanType } from "@/lib/quota";
+import { PLAN_LIMITS } from "@/lib/quota";
 
 const MOODS = [
 	"upbeat",
@@ -15,7 +17,7 @@ const MOODS = [
 	"funny",
 	"corporate",
 ] as const;
-type Mood = (typeof MOODS)[number];
+export type Mood = (typeof MOODS)[number];
 
 export interface Track {
 	id: string;
@@ -34,11 +36,18 @@ const MOOD_COLORS: Record<Mood, string> = {
 	corporate: "var(--muted-fg)",
 };
 
-export function MusicLibrary({ initial }: { initial: Track[] }) {
+interface Props {
+	initial: Track[];
+	userPlan: PlanType;
+}
+
+export function MusicLibrary({ initial, userPlan }: Props) {
 	const [tracks, setTracks] = useState(initial);
 	const [mood, setMood] = useState<Mood>("upbeat");
 	const [isPending, start] = useTransition();
 	const fileRef = useRef<HTMLInputElement>(null);
+
+	const canUpload = PLAN_LIMITS[userPlan].musicUpload;
 
 	const show = (text: string, ok: boolean) => {
 		toastMessage(text, ok, 3500);
@@ -84,56 +93,68 @@ export function MusicLibrary({ initial }: { initial: Track[] }) {
 						Music Library
 					</h2>
 					<p className="text-xs mt-0.5 text-muted">
-						{tracks.length} tracks · upload your own
+						{tracks.length} tracks ·{" "}
+						{canUpload ? "upload your own" : "Pro feature"}
 					</p>
 				</div>
-				<label className="shrink-0">
-					<input
-						ref={fileRef}
-						type="file"
-						accept="audio/mp3,audio/mpeg,audio/*"
-						onChange={handleUpload}
-						className="hidden"
-					/>
-					<Button
-						size="sm"
-						disabled={isPending}
-						onClick={() => fileRef.current?.click()}
-						className="bg-script text-white hover:bg-script/90"
-						type="button"
+				{canUpload ? (
+					<label className="shrink-0">
+						<input
+							ref={fileRef}
+							type="file"
+							accept="audio/mp3,audio/mpeg,audio/*"
+							onChange={handleUpload}
+							className="hidden"
+						/>
+						<Button
+							size="sm"
+							disabled={isPending}
+							onClick={() => fileRef.current?.click()}
+							className="bg-script text-white hover:bg-script/90"
+							type="button"
+						>
+							<Upload size={12} className="mr-1.5" />
+							{isPending ? "Uploading…" : `Upload as ${mood}`}
+						</Button>
+					</label>
+				) : (
+					<div
+						className="flex items-center gap-1.5 text-xs text-muted border border-border rounded-lg px-3 py-1.5 cursor-not-allowed"
+						title="Upgrade to Pro to upload custom music"
 					>
-						<Upload size={12} className="mr-1.5" />
-						{isPending ? "Uploading…" : `Upload as ${mood}`}
-					</Button>
-				</label>
+						<Lock size={11} />
+						Pro feature
+					</div>
+				)}
 			</div>
 
-			{/* Upload row */}
-			<div className="flex items-center gap-2 p-3 rounded-lg mb-4 bg-surface border border-border">
-				{/* Mood selector */}
-				<div className="flex gap-1 flex-wrap flex-1">
-					{MOODS.map((m) => (
-						<button
-							key={m}
-							onClick={() => setMood(m)}
-							className="px-3 py-1 rounded-md text-xs font-medium tracking-wide transition-all"
-							style={{
-								background:
-									mood === m
-										? `${MOOD_COLORS[m]}20`
-										: "transparent",
-								border: `1px solid ${mood === m ? MOOD_COLORS[m] : "var(--border)"}`,
-								color:
-									mood === m
-										? MOOD_COLORS[m]
-										: "var(--muted)",
-							}}
-						>
-							{m}
-						</button>
-					))}
+			{/* Mood selector — only shown when upload is available */}
+			{canUpload && (
+				<div className="flex items-center gap-2 p-3 rounded-lg mb-4 bg-surface border border-border">
+					<div className="flex gap-1 flex-wrap flex-1">
+						{MOODS.map((m) => (
+							<button
+								key={m}
+								onClick={() => setMood(m)}
+								className="px-3 py-1 rounded-md text-xs font-medium tracking-wide transition-all"
+								style={{
+									background:
+										mood === m
+											? `${MOOD_COLORS[m]}20`
+											: "transparent",
+									border: `1px solid ${mood === m ? MOOD_COLORS[m] : "var(--border)"}`,
+									color:
+										mood === m
+											? MOOD_COLORS[m]
+											: "var(--muted)",
+								}}
+							>
+								{m}
+							</button>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
 
 			{/* Hint */}
 			<p className="text-xs mb-3 text-muted">
@@ -163,7 +184,8 @@ export function MusicLibrary({ initial }: { initial: Track[] }) {
 				<div className="text-center py-8 text-muted">
 					<Music size={24} className="mx-auto mb-2 opacity-40" />
 					<p className="text-xs">
-						No tracks yet — upload your first one
+						No tracks yet
+						{canUpload ? " — upload your first one" : ""}
 					</p>
 				</div>
 			) : (
@@ -208,13 +230,15 @@ export function MusicLibrary({ initial }: { initial: Track[] }) {
 								src={track.url}
 								className="h-6 w-24 shrink-0"
 							/>
-							<button
-								onClick={() => handleDelete(track.id)}
-								disabled={isPending}
-								className="shrink-0 hover:opacity-75 transition-opacity"
-							>
-								<Trash2 size={14} className="text-danger" />
-							</button>
+							{canUpload && (
+								<button
+									onClick={() => handleDelete(track.id)}
+									disabled={isPending}
+									className="shrink-0 hover:opacity-75 transition-opacity"
+								>
+									<Trash2 size={14} className="text-danger" />
+								</button>
+							)}
 						</div>
 					))}
 				</div>

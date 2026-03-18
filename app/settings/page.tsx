@@ -2,21 +2,37 @@ import { GeneralSettings } from "@/components/GeneralSettings";
 import { MusicLibrary } from "@/components/MusicLibrary";
 import { QueryManager } from "@/components/QueryManager";
 import { ChannelManager } from "@/components/ChannelManager";
+import { BillingPanel } from "@/components/BillingPanel";
 import { Button } from "@/components/ui/button";
-import { getSettings, supabase } from "@/lib/supabase";
+import { getSettings, getMusicTracksForUser } from "@/lib/supabase";
 import Link from "next/link";
 import { getChannels } from "@/lib/actions/channels";
+import { ensureUserExists } from "@/lib/actions/onboarding";
+import { getAuthContext } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 
 interface Props {
-	searchParams: Promise<{ channel_connected?: string }>;
+	searchParams: Promise<{
+		channel_connected?: string;
+		channel_error?: string;
+	}>;
 }
 
 export default async function SettingsPage({ searchParams }: Props) {
-	const { channel_connected } = await searchParams;
+	const { userId, redirectToSignIn } = await auth();
+	if (!userId) return redirectToSignIn();
 
-	const [settings, { data: tracks }, channelsResult] = await Promise.all([
-		getSettings(),
-		supabase.from("music_tracks").select("*").order("mood"),
+	const { channel_connected, channel_error } = await searchParams;
+
+	// Ensure user row exists + get plan from Clerk
+	const [user, { plan }] = await Promise.all([
+		ensureUserExists(),
+		getAuthContext(),
+	]);
+
+	const [settings, tracks, channelsResult] = await Promise.all([
+		getSettings(user.id),
+		getMusicTracksForUser(user.id),
 		getChannels(),
 	]);
 
@@ -28,7 +44,8 @@ export default async function SettingsPage({ searchParams }: Props) {
 						Settings
 					</h1>
 					<p className="text-sm mt-1 text-muted">
-						Configure discovery queries and pipeline options.
+						Configure your subscription, connected channels, YouTube
+						queries, and more.
 					</p>
 				</div>
 				<Button variant="outline" className="hover:bg-muted">
@@ -44,13 +61,23 @@ export default async function SettingsPage({ searchParams }: Props) {
 			<div className="flex justify-center gap-5">
 				<div className="flex flex-col gap-5">
 					<GeneralSettings initial={settings} />
+					<QueryManager
+						initial={settings.youtube_queries}
+						userPlan={plan}
+					/>
+				</div>
+				<div className="flex flex-col gap-5">
 					<ChannelManager
 						initial={channelsResult.ok ? channelsResult.data : []}
 						channelConnected={channel_connected ?? null}
+						channelError={channel_error ?? null}
 					/>
-					<MusicLibrary initial={tracks ?? []} />
+					<MusicLibrary initial={tracks} userPlan={plan} />
+					<BillingPanel
+						user={user}
+						rendersUsed={user.videos_rendered_this_period}
+					/>
 				</div>
-				<QueryManager initial={settings.youtube_queries} />
 			</div>
 		</main>
 	);
