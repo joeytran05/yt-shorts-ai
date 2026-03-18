@@ -3,9 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function GET(req: NextRequest) {
 	const code = req.nextUrl.searchParams.get("code");
-	const niche = req.nextUrl.searchParams.get("state") ?? "";
+	const userId = req.nextUrl.searchParams.get("state") ?? "";
 
 	if (!code) return NextResponse.json({ error: "No code" }, { status: 400 });
+	if (!userId)
+		return NextResponse.json({ error: "No user state" }, { status: 400 });
 
 	const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
 		method: "POST",
@@ -29,51 +31,46 @@ export async function GET(req: NextRequest) {
 		});
 	}
 
-	// If a niche was specified, save this channel to the channels table
-	if (niche) {
-		// Fetch the YouTube channel info to get the channel name + thumbnail
-		const channelRes = await fetch(
-			"https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
-			{
-				headers: {
-					Authorization: `Bearer ${tokenData.access_token}`,
-				},
+	// Fetch the YouTube channel info to get the channel name + thumbnail
+	const channelRes = await fetch(
+		"https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
+		{
+			headers: {
+				Authorization: `Bearer ${tokenData.access_token}`,
 			},
-		);
-		const channelData = await channelRes.json();
-		const channelItem = channelData?.items?.[0];
+		},
+	);
+	const channelData = await channelRes.json();
+	const channelItem = channelData?.items?.[0];
 
-		const db = createClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.SUPABASE_SERVICE_ROLE_KEY!,
-			{ auth: { persistSession: false } },
-		);
+	const db = createClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_ROLE_KEY!,
+		{ auth: { persistSession: false } },
+	);
 
-		await db.from("channels").upsert(
-			{
-				niche,
-				name: channelItem?.snippet?.title ?? niche,
-				refresh_token: tokenData.refresh_token,
-				yt_channel_id: channelItem?.id ?? null,
-				yt_channel_name: channelItem?.snippet?.title ?? null,
-				yt_channel_thumbnail:
-					channelItem?.snippet?.thumbnails?.default?.url ?? null,
-			},
-			{ onConflict: "niche" },
-		);
+	const { error: channelError } = await db.from("channels").upsert(
+		{
+			user_id: userId,
+			name: channelItem?.snippet?.title ?? "My Channel",
+			refresh_token: tokenData.refresh_token,
+			yt_channel_id: channelItem?.id ?? null,
+			yt_channel_name: channelItem?.snippet?.title ?? null,
+			yt_channel_thumbnail:
+				channelItem?.snippet?.thumbnails?.default?.url ?? null,
+		},
+		{ onConflict: "user_id" },
+	);
 
-		// Redirect back to settings with a success indicator
+	if (channelError) {
+		console.error("Failed to save channel:", channelError);
 		const origin = req.nextUrl.origin;
 		return NextResponse.redirect(
-			`${origin}/settings?channel_connected=${niche}`,
+			`${origin}/settings?channel_error=${encodeURIComponent(channelError.message)}`,
 		);
 	}
 
-	// Legacy flow — no niche: show the refresh token for manual .env setup
-	return NextResponse.json({
-		message:
-			"✓ Copy this refresh token to your .env.local as YOUTUBE_REFRESH_TOKEN",
-		refresh_token: tokenData.refresh_token,
-		access_token: tokenData.access_token,
-	});
+	// Redirect back to settings with a success indicator
+	const origin = req.nextUrl.origin;
+	return NextResponse.redirect(`${origin}/settings?channel_connected=1`);
 }
