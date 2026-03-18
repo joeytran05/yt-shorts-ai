@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db, supabase, updateIdea } from "@/lib/supabase";
+import { db, updateIdea } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
 import type { ActionResult, Idea } from "@/types";
 
 async function fetchYTStats(
@@ -23,11 +24,19 @@ async function fetchYTStats(
 export async function fetchVideoMetrics(
 	ideaId: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const { data: idea, error: fetchErr } = await supabase
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const { data: idea, error: fetchErr } = await db
 			.from("ideas")
 			.select("yt_video_id")
 			.eq("id", ideaId)
+			.eq("user_id", userId)
 			.single();
 
 		if (fetchErr || !idea?.yt_video_id)
@@ -36,7 +45,7 @@ export async function fetchVideoMetrics(
 		const stats = await fetchYTStats(idea.yt_video_id);
 		if (!stats) return { ok: false, error: "Failed to fetch YouTube stats" };
 
-		const updated = await updateIdea(ideaId, {
+		const updated = await updateIdea(userId, ideaId, {
 			yt_views: stats.views,
 			yt_likes: stats.likes,
 			yt_comments: stats.comments,
@@ -56,11 +65,19 @@ export async function fetchVideoMetrics(
 export async function refreshAllMetrics(): Promise<
 	ActionResult<{ updated: number }>
 > {
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
 	try {
 		const { data: ideas, error } = await db
 			.from("ideas")
 			.select("id, yt_video_id")
 			.eq("status", "published")
+			.eq("user_id", userId)
 			.not("yt_video_id", "is", null);
 
 		if (error) throw new Error(error.message);
@@ -78,7 +95,8 @@ export async function refreshAllMetrics(): Promise<
 					yt_comments: stats.comments,
 					yt_metrics_fetched_at: new Date().toISOString(),
 				})
-				.eq("id", idea.id);
+				.eq("id", idea.id)
+				.eq("user_id", userId);
 			updated++;
 			// Small delay to avoid hammering the API
 			await new Promise((r) => setTimeout(r, 300));

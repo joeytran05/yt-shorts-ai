@@ -10,6 +10,8 @@ import {
 	failProductionJob,
 	db,
 } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
+import { checkRenderQuota } from "@/lib/quota";
 import type { ActionResult, Idea } from "@/types";
 import { enqueueVideoRender } from "../queue";
 
@@ -17,11 +19,18 @@ export async function generateVoiceover(
 	ideaId: string,
 	voiceId = "EXAVITQu4vr4xnSDxMaL",
 ): Promise<ActionResult<{ audio_url: string }>> {
-	const idea = await getIdea(ideaId);
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	const idea = await getIdea(userId, ideaId);
 	if (!idea?.script_full) return { ok: false, error: "No script found" };
 
-	await setStatus(ideaId, "generating_voice");
-	const job = await createProductionJob(ideaId, "voiceover", "elevenlabs");
+	await setStatus(userId, ideaId, "generating_voice");
+	const job = await createProductionJob(userId, ideaId, "voiceover", "elevenlabs");
 	revalidatePath("/dashboard");
 
 	try {
@@ -62,7 +71,7 @@ export async function generateVoiceover(
 		const audio_url = urlData.publicUrl;
 
 		await completeProductionJob(job.id, audio_url);
-		await updateIdea(ideaId, {
+		await updateIdea(userId, ideaId, {
 			audio_url,
 			voice_id: voiceId,
 			status: "scripted",
@@ -75,7 +84,7 @@ export async function generateVoiceover(
 			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
 
 		await failProductionJob(job.id, error);
-		await setStatus(ideaId, "failed", { last_error: error });
+		await setStatus(userId, ideaId, "failed", { last_error: error });
 
 		revalidatePath("/dashboard");
 		return { ok: false, error };
@@ -86,16 +95,33 @@ export async function generateVoiceover(
 export async function generateVideo(
 	ideaId: string,
 ): Promise<ActionResult<Idea>> {
-	const idea = await getIdea(ideaId);
+	let userId: string;
+	let plan: import("@/lib/quota").PlanType;
+	try {
+		({ userId, plan } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	// Quota check before enqueuing
+	const quotaErr = await checkRenderQuota(
+		userId,
+		plan,
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_ROLE_KEY!,
+	);
+	if (quotaErr) return { ok: false, error: quotaErr };
+
+	const idea = await getIdea(userId, ideaId);
 	if (!idea) return { ok: false, error: "Idea not found" };
 	if (!idea.audio_url)
 		return { ok: false, error: "No audio — generate voiceover first" };
 	if (!idea.script_full) return { ok: false, error: "No script found" };
 
 	try {
-		const msgId = await enqueueVideoRender(ideaId, "normal");
+		const msgId = await enqueueVideoRender(ideaId, userId, "normal");
 
-		const updated = await updateIdea(ideaId, {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "generating_video",
 			scenes_status: "none",
 			render_job_id: Number(msgId),
@@ -107,7 +133,7 @@ export async function generateVideo(
 	} catch (err) {
 		const error =
 			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
-		await setStatus(ideaId, "failed", { last_error: error });
+		await setStatus(userId, ideaId, "failed", { last_error: error });
 		revalidatePath("/dashboard");
 		return { ok: false, error };
 	}
@@ -117,8 +143,15 @@ export async function approveProducedVideo(
 	ideaId: string,
 	notes?: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const updated = await updateIdea(ideaId, {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "ready_to_publish",
 			review_notes: notes ?? null,
 		});
@@ -139,8 +172,15 @@ export async function requestChanges(
 	ideaId: string,
 	notes: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const updated = await updateIdea(ideaId, {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "changes_requested",
 			review_notes: notes,
 		});
@@ -161,21 +201,30 @@ export async function setMusicTrack(
 	ideaId: string,
 	trackId: string | null, // null = use auto mood matching
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
 	try {
 		let music_url: string | null = null;
 
 		if (trackId) {
+			// Only allow access to the user's own tracks or system tracks
 			const { data: track } = await db
 				.from("music_tracks")
 				.select("url, name")
 				.eq("id", trackId)
+				.or(`user_id.eq.${userId},user_id.is.null`)
 				.single();
 
 			if (!track) return { ok: false, error: "Track not found" };
 			music_url = track.url;
 		}
 
-		const updated = await updateIdea(ideaId, { music_url });
+		const updated = await updateIdea(userId, ideaId, { music_url });
 		revalidatePath("/dashboard");
 		return { ok: true, data: updated };
 	} catch (err) {

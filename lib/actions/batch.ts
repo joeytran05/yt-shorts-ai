@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { setStatus } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
+import { updateIdea } from "@/lib/supabase";
 import { approveIdea, retryIdea, restoreIdea } from "./script";
 import type { ActionResult } from "@/types";
 
@@ -9,9 +10,18 @@ import type { ActionResult } from "@/types";
 export async function batchRejectIdeas(
 	ids: string[],
 ): Promise<ActionResult> {
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
 	try {
 		await Promise.allSettled(
-			ids.map((id) => setStatus(id, "rejected")),
+			ids.map((id) =>
+				updateIdea(userId, id, { status: "rejected" }),
+			),
 		);
 		revalidatePath("/dashboard");
 		return { ok: true, data: undefined };
@@ -27,6 +37,7 @@ export async function batchRejectIdeas(
 export async function batchApproveIdeas(
 	ids: string[],
 ): Promise<ActionResult> {
+	// Auth is handled inside approveIdea
 	const errors: string[] = [];
 	for (const id of ids) {
 		const result = await approveIdea(id);
@@ -43,6 +54,7 @@ export async function batchApproveIdeas(
 export async function batchRestoreIdeas(
 	ids: string[],
 ): Promise<ActionResult> {
+	// Auth is handled inside restoreIdea
 	try {
 		await Promise.allSettled(ids.map((id) => restoreIdea(id)));
 		revalidatePath("/dashboard");
@@ -59,6 +71,7 @@ export async function batchRestoreIdeas(
 export async function batchRetryIdeas(
 	ids: string[],
 ): Promise<ActionResult> {
+	// Auth is handled inside retryIdea
 	try {
 		await Promise.allSettled(ids.map((id) => retryIdea(id)));
 		revalidatePath("/dashboard");

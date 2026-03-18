@@ -8,9 +8,10 @@ import {
 	startScrapeRun,
 	endScrapeRun,
 	updateIdea,
-	supabase,
+	db,
 	getSettings,
 } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
 import type { ActionResult, DiscoverResult, Idea } from "@/types";
 
 // Statuses considered "early stage" — safe to overwrite on re-discovery
@@ -19,10 +20,17 @@ const OVERWRITABLE_STATUSES = new Set(["discovered", "scored", "rejected"]);
 export async function discoverIdeas(
 	formData?: FormData,
 ): Promise<ActionResult<DiscoverResult>> {
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
 	const t0 = Date.now();
 
 	// Load queries + options from settings
-	const settings = await getSettings();
+	const settings = await getSettings(userId);
 	const queries = settings.youtube_queries
 		.filter((q) => q.enabled)
 		.map((q) => q.query);
@@ -38,7 +46,7 @@ export async function discoverIdeas(
 		(formData?.get("min_views") as string) ?? String(settings.min_views),
 	);
 	const perQuery = settings.per_query;
-	const run = await startScrapeRun(queries.slice(0, 5));
+	const run = await startScrapeRun(userId, queries.slice(0, 5));
 
 	try {
 		// 1. Scrape raw ideas
@@ -48,15 +56,16 @@ export async function discoverIdeas(
 		const savedRecords: Idea[] = [];
 		let newCount = 0;
 
-		// Load existing ideas to protect advanced statuses
+		// Load existing ideas for this user to protect advanced statuses
 		const hashes = raw
 			.map((i) => i.content_hash)
 			.filter(Boolean) as string[];
 
-		const { data: existing } = await supabase
+		const { data: existing } = await db
 			.from("ideas")
 			.select("id, content_hash, status")
-			.in("content_hash", hashes);
+			.in("content_hash", hashes)
+			.eq("user_id", userId);
 
 		const existingMap = new Map(
 			(existing ?? []).map((e) => [e.content_hash, e.status]),
@@ -75,7 +84,7 @@ export async function discoverIdeas(
 				continue;
 			}
 
-			const record = await upsertIdea({
+			const record = await upsertIdea(userId, {
 				...idea,
 				content_hash: idea.content_hash,
 				status: "discovered",
@@ -93,7 +102,7 @@ export async function discoverIdeas(
 		const updated: Idea[] = [];
 
 		for (const idea of scored) {
-			const record = await updateIdea(idea.id!, {
+			const record = await updateIdea(userId, idea.id!, {
 				viral_score: Math.round(idea.viral_score),
 				hook_score: Math.round(idea.hook_score),
 				trend_score: Math.round(idea.trend_score),

@@ -1,13 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSettings, updateSettings, db, supabase } from "@/lib/supabase";
+import { getSettings, updateSettings, db, getMusicTracksForUser } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
+import { PLAN_LIMITS } from "@/lib/quota";
 import type { ActionResult, Settings, YoutubeQuery } from "@/types";
-import { Track } from "@/components/MusicLibrary";
+import type { Track } from "@/lib/supabase";
 
 export async function fetchSettings(): Promise<ActionResult<Settings>> {
 	try {
-		const data = await getSettings();
+		const { userId } = await getAuthContext();
+		const data = await getSettings(userId);
 		return { ok: true, data };
 	} catch (err) {
 		return {
@@ -24,7 +27,17 @@ export async function saveQueries(
 	queries: YoutubeQuery[],
 ): Promise<ActionResult<Settings>> {
 	try {
-		const data = await updateSettings({ youtube_queries: queries });
+		const { userId, plan } = await getAuthContext();
+
+		// Gate custom queries to Pro+ plans (server-side enforcement)
+		if (!PLAN_LIMITS[plan].customQueries && queries.some((q) => q.custom)) {
+			return {
+				ok: false,
+				error: "Custom queries require a Pro or Business plan.",
+			};
+		}
+
+		const data = await updateSettings(userId, { youtube_queries: queries });
 		revalidatePath("/settings");
 		return { ok: true, data };
 	} catch (err) {
@@ -45,7 +58,8 @@ export async function saveGeneralSettings(
 	>,
 ): Promise<ActionResult<Settings>> {
 	try {
-		const data = await updateSettings(patch);
+		const { userId } = await getAuthContext();
+		const data = await updateSettings(userId, patch);
 		revalidatePath("/settings");
 		return { ok: true, data };
 	} catch (err) {
@@ -63,6 +77,16 @@ export async function uploadMusicTrack(
 	formData: FormData,
 ): Promise<ActionResult<Track>> {
 	try {
+		const { userId, plan } = await getAuthContext();
+
+		// Gate music uploads to Pro+ plans
+		if (!PLAN_LIMITS[plan].musicUpload) {
+			return {
+				ok: false,
+				error: "Music uploads require a Pro or Business plan.",
+			};
+		}
+
 		const file = formData.get("file") as File;
 		const mood = formData.get("mood") as string;
 		const name = formData.get("name") as string;
@@ -89,10 +113,10 @@ export async function uploadMusicTrack(
 			.from("production-assets")
 			.getPublicUrl(fileName);
 
-		// Save to music_tracks table
+		// Save to music_tracks table scoped to this user
 		const { data, error } = await db
 			.from("music_tracks")
-			.insert({ name, mood, url: urlData.publicUrl, duration })
+			.insert({ name, mood, url: urlData.publicUrl, duration, user_id: userId })
 			.select()
 			.single();
 
@@ -110,14 +134,19 @@ export async function uploadMusicTrack(
 
 export async function deleteMusicTrack(id: string): Promise<ActionResult> {
 	try {
-		// Get URL to also delete from storage
-		const { data: track } = await supabase
+		const { userId } = await getAuthContext();
+
+		// Only allow deleting own tracks (not system tracks where user_id IS NULL)
+		const { data: track } = await db
 			.from("music_tracks")
-			.select("url")
+			.select("url, user_id")
 			.eq("id", id)
+			.eq("user_id", userId) // enforces ownership
 			.single();
 
-		if (track?.url) {
+		if (!track) return { ok: false, error: "Track not found or not yours" };
+
+		if (track.url) {
 			// Extract storage path from URL
 			const urlPath = new URL(track.url).pathname;
 			const filePath = urlPath.split("/production-assets/")[1];
@@ -126,7 +155,7 @@ export async function deleteMusicTrack(id: string): Promise<ActionResult> {
 			}
 		}
 
-		await db.from("music_tracks").delete().eq("id", id);
+		await db.from("music_tracks").delete().eq("id", id).eq("user_id", userId);
 		revalidatePath("/settings");
 		return { ok: true, data: undefined };
 	} catch (err) {
@@ -139,14 +168,9 @@ export async function deleteMusicTrack(id: string): Promise<ActionResult> {
 
 export async function getMusicTracks(): Promise<ActionResult<Track[]>> {
 	try {
-		const { data, error } = await supabase
-			.from("music_tracks")
-			.select("id, name, mood, url, duration")
-			.order("mood")
-			.order("name");
-
-		if (error) throw new Error(error.message);
-		return { ok: true, data: data ?? [] };
+		const { userId } = await getAuthContext();
+		const data = await getMusicTracksForUser(userId);
+		return { ok: true, data };
 	} catch (err) {
 		return {
 			ok: false,
@@ -158,7 +182,6 @@ export async function getMusicTracks(): Promise<ActionResult<Track[]>> {
 // Read audio duration using Web Audio API (server-side via ArrayBuffer)
 async function getAudioDuration(file: File): Promise<number> {
 	try {
-		// Parse MP3 header to estimate duration
 		// Approximate: file size / bitrate
 		const sizeKB = file.size / 1024;
 		return Math.round(sizeKB / 16); // ~128kbps = 16KB/s

@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase, upsertIdea, updateIdea } from "@/lib/supabase";
+import { db, upsertIdea, updateIdea } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
+import { PLAN_LIMITS } from "@/lib/quota";
 import { fetchSingleVideo } from "@/lib/youtube-scraper";
 import { batchScore, generateIdeaFromPrompt } from "@/lib/ai";
 import { md5 } from "@/lib/utils";
@@ -43,6 +45,13 @@ function parseVideoId(raw: string): string | null {
 
 // ── Add idea from a YouTube Shorts URL ───────────────────────────
 export async function addIdeaFromUrl(url: string): Promise<ActionResult<Idea>> {
+	let userId: string;
+	try {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
 	try {
 		const videoId = parseVideoId(url);
 		if (!videoId)
@@ -51,12 +60,12 @@ export async function addIdeaFromUrl(url: string): Promise<ActionResult<Idea>> {
 				error: "Could not parse a YouTube video ID from that URL.",
 			};
 
-		// Check if it's already deep in the pipeline
-		const hash = `${videoId}:`;
-		const { data: existing } = await supabase
+		// Check if it's already deep in the pipeline for this user
+		const { data: existing } = await db
 			.from("ideas")
 			.select("id, status, content_hash")
 			.ilike("content_hash", `${videoId}:%`)
+			.eq("user_id", userId)
 			.maybeSingle();
 
 		if (existing && ACTIVE_STATUSES.has(existing.status)) {
@@ -75,7 +84,7 @@ export async function addIdeaFromUrl(url: string): Promise<ActionResult<Idea>> {
 			};
 
 		// Upsert (handles re-add of rejected/scored ideas cleanly)
-		const saved = await upsertIdea({
+		const saved = await upsertIdea(userId, {
 			...(metadata as Partial<Idea> & { content_hash: string }),
 			status: "discovered",
 		});
@@ -84,7 +93,7 @@ export async function addIdeaFromUrl(url: string): Promise<ActionResult<Idea>> {
 		const [scored] = await batchScore([saved]);
 		if (!scored) return { ok: false, error: "AI scoring failed." };
 
-		const updated = await updateIdea(saved.id, {
+		const updated = await updateIdea(userId, saved.id, {
 			status: "scored",
 			viral_score: Math.round(scored.viral_score ?? 0),
 			hook_score: Math.round(scored.hook_score ?? 0),
@@ -116,6 +125,15 @@ export async function generateIdeaAction(
 	}>
 > {
 	try {
+		const { plan } = await getAuthContext();
+
+		if (!PLAN_LIMITS[plan].customQueries) {
+			return {
+				ok: false,
+				error: "AI idea generation requires a Pro or Business plan.",
+			};
+		}
+
 		if (!prompt.trim())
 			return { ok: false, error: "Please describe your idea first." };
 
@@ -146,14 +164,30 @@ export async function addIdeaFromText(data: {
 	tags: string[];
 	hook: string;
 }): Promise<ActionResult<Idea>> {
+	let userId: string;
+	let plan: import("@/lib/quota").PlanType;
+	try {
+		({ userId, plan } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	if (!PLAN_LIMITS[plan].customQueries) {
+		return {
+			ok: false,
+			error: "AI idea generation requires a Pro or Business plan.",
+		};
+	}
+
 	try {
 		const hash = md5(`${data.title}:${data.description}`);
 
-		// Check for exact duplicate
-		const { data: existing } = await supabase
+		// Check for exact duplicate for this user
+		const { data: existing } = await db
 			.from("ideas")
 			.select("id, status")
 			.eq("content_hash", hash)
+			.eq("user_id", userId)
 			.maybeSingle();
 
 		if (existing && ACTIVE_STATUSES.has(existing.status)) {
@@ -163,7 +197,7 @@ export async function addIdeaFromText(data: {
 			};
 		}
 
-		const saved = await upsertIdea({
+		const saved = await upsertIdea(userId, {
 			source: "manual",
 			title: data.title,
 			description: data.description,
@@ -181,7 +215,7 @@ export async function addIdeaFromText(data: {
 		const [scored] = await batchScore([saved]);
 		if (!scored) return { ok: false, error: "AI scoring failed." };
 
-		const updated = await updateIdea(saved.id, {
+		const updated = await updateIdea(userId, saved.id, {
 			status: "scored",
 			viral_score: Math.round(scored.viral_score ?? 0),
 			hook_score: Math.round(scored.hook_score ?? 0),

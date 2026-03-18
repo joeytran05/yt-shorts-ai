@@ -3,19 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { generateScript } from "@/lib/ai";
 import { getIdea, setStatus, updateIdea } from "@/lib/supabase";
+import { getAuthContext } from "@/lib/auth";
 import type { ActionResult, Idea } from "@/types";
 
 export async function approveIdea(ideaId: string): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const idea = await getIdea(ideaId);
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const idea = await getIdea(userId, ideaId);
 		if (!idea) return { ok: false, error: "Idea not found" };
 
-		await setStatus(ideaId, "approved");
+		await setStatus(userId, ideaId, "approved");
 		revalidatePath("/dashboard");
 
 		const script = await generateScript(idea);
 
-		const updated = await updateIdea(ideaId, {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "scripted",
 			script_hook: script.script_hook,
 			script_body: script.script_body,
@@ -38,7 +46,7 @@ export async function approveIdea(ideaId: string): Promise<ActionResult<Idea>> {
 		const error =
 			err instanceof Error ? err.message : JSON.stringify(err, null, 2);
 
-		await setStatus(ideaId, "failed", { last_error: error });
+		await setStatus(userId, ideaId, "failed", { last_error: error });
 		revalidatePath("/dashboard");
 		return { ok: false, error };
 	}
@@ -48,8 +56,15 @@ export async function rejectIdea(
 	ideaId: string,
 	reason?: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const updated = await updateIdea(ideaId, {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "rejected",
 			rejection_reason: reason ?? null,
 		});
@@ -70,8 +85,15 @@ export async function rejectIdea(
 export async function retryIdea(
 	ideaId: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const idea = await getIdea(ideaId);
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const idea = await getIdea(userId, ideaId);
 		if (!idea) return { ok: false, error: "Idea not found" };
 
 		// Walk back to the last checkpoint that has data,
@@ -87,7 +109,7 @@ export async function retryIdea(
 			restoreStatus = "ready_to_publish"; // failed during upload → retry upload
 		}
 
-		const updated = await updateIdea(ideaId, {
+		const updated = await updateIdea(userId, ideaId, {
 			status: restoreStatus,
 			last_error: null,
 		});
@@ -107,8 +129,15 @@ export async function retryIdea(
 export async function restoreIdea(
 	ideaId: string,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const updated = await updateIdea(ideaId, {
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const updated = await updateIdea(userId, ideaId, {
 			status: "scored",
 			rejection_reason: null,
 		});
@@ -129,8 +158,15 @@ export async function updateScript(
 	ideaId: string,
 	patch: Partial<Idea>,
 ): Promise<ActionResult<Idea>> {
+	let userId: string;
 	try {
-		const updated = await updateIdea(ideaId, patch);
+		({ userId } = await getAuthContext());
+	} catch {
+		return { ok: false, error: "Unauthorized" };
+	}
+
+	try {
+		const updated = await updateIdea(userId, ideaId, patch);
 		revalidatePath("/dashboard");
 		return { ok: true, data: updated };
 	} catch (err) {
