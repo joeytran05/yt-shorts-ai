@@ -1,5 +1,20 @@
 import { SceneData } from "./scenes";
 
+// ── SaaS / billing types ─────────────────────────────────────────
+
+export type PlanType = "free" | "pro" | "business";
+
+export interface User {
+	id: string; // Clerk userId (user_2abc...)
+	email: string | null;
+	videos_rendered_this_period: number;
+	period_reset_at: string;
+	created_at: string;
+	updated_at: string;
+}
+
+// ────────────────────────────────────────────────────────────────
+
 export type IdeaStatus =
 	| "discovered"
 	| "scored"
@@ -68,6 +83,7 @@ export type YTVideoResponse = {
 
 export interface Idea {
 	id: string;
+	user_id: string;
 	source: IdeaSource;
 	source_url: string | null;
 	source_video_id: string | null;
@@ -306,7 +322,7 @@ export interface YoutubeQuery {
 }
 
 export interface Settings {
-	id: string;
+	user_id: string; // was: id: string (the id='global' single-row pattern is removed)
 	youtube_queries: YoutubeQuery[];
 	min_views: number;
 	per_query: number;
@@ -317,8 +333,9 @@ export interface Settings {
 
 export interface Channel {
 	id: string;
+	user_id: string; // one channel per user
 	name: string;
-	niche: NicheType;
+	// niche removed — channels are no longer niche-scoped
 	yt_channel_id: string | null;
 	yt_channel_name: string | null;
 	yt_channel_thumbnail: string | null;

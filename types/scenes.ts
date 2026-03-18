@@ -36,6 +36,7 @@ export interface WordCaption {
 
 export interface VideoRenderJob {
 	idea_id: string;
+	user_id: string;
 	priority: "normal" | "high";
 	enqueued_at: string;
 }
