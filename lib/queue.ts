@@ -15,11 +15,13 @@ function makeAdminClient() {
 
 export async function enqueueVideoRender(
 	ideaId: string,
+	userId: string,
 	priority: "normal" | "high" = "normal",
 ): Promise<bigint> {
 	const client = makeAdminClient();
 	const message: VideoRenderJob = {
 		idea_id: ideaId,
+		user_id: userId,
 		priority,
 		enqueued_at: new Date().toISOString(),
 	};
