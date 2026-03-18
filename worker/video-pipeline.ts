@@ -8,6 +8,7 @@ import type { Idea } from "../types";
 import { compressVideo } from "./compressor";
 import { startClipServer } from "./clip-server";
 import { fetchBackgroundMusic } from "./music-fetcher";
+import { incrementRenderCount } from "../lib/quota";
 
 function db() {
 	return createClient(
@@ -34,7 +35,10 @@ async function patch(id: string, values: Record<string, unknown>) {
 //
 // After pipeline: status → 'produced'  (skips adding_captions stage)
 //
-export async function runVideoPipeline(ideaId: string): Promise<void> {
+export async function runVideoPipeline(
+	ideaId: string,
+	userId: string,
+): Promise<void> {
 	console.log(`[pipeline] Starting idea ${ideaId}`);
 
 	const idea = await getIdea(ideaId);
@@ -136,6 +140,7 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 			(await fetchBackgroundMusic(
 				idea.music_track ?? "background",
 				durationSec,
+				userId,
 			)),
 	]);
 
@@ -216,6 +221,13 @@ export async function runVideoPipeline(ideaId: string): Promise<void> {
 		render_finished_at: new Date().toISOString(),
 		render_error: null,
 	});
+
+	// ── Increment render quota counter ───────────────────────────
+	await incrementRenderCount(
+		userId,
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_ROLE_KEY!,
+	);
 
 	console.log(`[pipeline] Done → ${urlData.publicUrl}`);
 }

@@ -6,10 +6,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import {
-	getYouTubeAccessToken,
-	getYouTubeAccessTokenForChannel,
-} from "../lib/youtube-auth";
+import { getYouTubeAccessTokenForChannel } from "../lib/youtube-auth";
 import {
 	performYouTubeUpload,
 	type UploadableIdea,
@@ -19,7 +16,7 @@ import {
 interface ScheduledIdea extends UploadableIdea {
 	id: string;
 	title: string;
-	niche: string | null;
+	user_id: string;
 }
 
 function db() {
@@ -78,20 +75,24 @@ async function uploadScheduledIdea(idea: ScheduledIdea): Promise<void> {
 	}
 
 	try {
-		// ── Resolve YouTube access token (per-channel or global) ──────
+		// ── Resolve YouTube access token from user's connected channel ──
 		const { data: channel } = await db()
 			.from("channels")
 			.select("refresh_token")
-			.eq("niche", idea.niche ?? "")
+			.eq("user_id", idea.user_id)
 			.maybeSingle();
 
-		const accessToken =
-			channel?.refresh_token
-				? await getYouTubeAccessTokenForChannel(channel.refresh_token)
-				: await getYouTubeAccessToken();
+		if (!channel?.refresh_token)
+			throw new Error(
+				"No YouTube channel connected. Connect a channel in Settings.",
+			);
+
+		const accessToken = await getYouTubeAccessTokenForChannel(
+			channel.refresh_token,
+		);
 
 		if (!accessToken)
-			throw new Error("No YouTube access token available");
+			throw new Error("Failed to obtain YouTube access token");
 
 		// ── Perform the upload ─────────────────────────────────────────
 		const { yt_video_id, yt_url } = await performYouTubeUpload(

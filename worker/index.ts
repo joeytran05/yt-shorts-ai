@@ -81,7 +81,7 @@ async function poll() {
 			}
 
 			idle = 0;
-			const { idea_id } = msg.message;
+			const { idea_id, user_id } = msg.message;
 
 			if (msg.read_ct > MAX_ATTEMPTS) {
 				console.warn(
@@ -97,7 +97,7 @@ async function poll() {
 			);
 
 			try {
-				await runVideoPipeline(idea_id);
+				await runVideoPipeline(idea_id, user_id);
 				await ack(msg.msg_id);
 				console.log(`[worker] ✓ Job ${msg.msg_id} done`);
 			} catch (err) {

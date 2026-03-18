@@ -20,6 +20,7 @@ function detectMood(suggestion: string): string {
 export async function fetchBackgroundMusic(
 	suggestion: string,
 	targetDurationSec: number,
+	userId: string,
 ): Promise<string | null> {
 	const mood = detectMood(suggestion);
 	console.log(`[music] Suggestion: "${suggestion}" → mood: "${mood}"`);
@@ -30,17 +31,26 @@ export async function fetchBackgroundMusic(
 		{ auth: { persistSession: false } },
 	);
 
-	// Try exact mood first, then fall back to any track
+	// Scope to user's own tracks + system tracks (user_id IS NULL)
+	const userFilter = `user_id.eq.${userId},user_id.is.null`;
+
+	// Try exact mood first, then fall back to any track visible to this user
 	const { data: tracks } = await db
 		.from("music_tracks")
 		.select("*")
 		.eq("mood", mood)
+		.or(userFilter)
 		.order("duration");
 
 	const pool = tracks?.length
 		? tracks
-		: ((await db.from("music_tracks").select("*").order("duration")).data ??
-			[]);
+		: ((
+				await db
+					.from("music_tracks")
+					.select("*")
+					.or(userFilter)
+					.order("duration")
+			).data ?? []);
 
 	if (!pool.length) {
 		console.warn(
