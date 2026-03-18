@@ -12,6 +12,10 @@
    Design Tokens
 ──────────────────────────────────────────────── */
 
+html {
+	scroll-behavior: smooth;
+}
+
 :root {
 	/* Core surfaces */
 	--bg: #08080f;

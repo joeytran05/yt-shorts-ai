@@ -10,6 +10,13 @@ import AddIdeaPanel from "@/components/AddIdeaPanel";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ensureUserExists } from "@/lib/actions/onboarding";
+import { getAuthContext } from "@/lib/auth";
+import { PlanBadge } from "@/components/PlanBadge";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { UserButton, Show } from "@clerk/nextjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STAGE_ICONS: Record<string, string> = {
 	discover: "🔍",
@@ -25,14 +32,23 @@ interface Props {
 }
 
 const DashboardPage = async ({ searchParams }: Props) => {
+	const { userId } = await auth();
+	if (!userId) redirect("/");
+
+	// Resolve plan + ensure DB user row exists (both read Clerk session)
+	const [{ plan }, user] = await Promise.all([
+		getAuthContext(),
+		ensureUserExists(),
+	]);
+
 	const { stage: rawStage, expand } = await searchParams;
 	const stage = rawStage ?? "discover";
 	const stageGroup =
 		STAGE_GROUPS.find((s) => s.id === stage) ?? STAGE_GROUPS[0];
 
 	const [rawIdeas, counts] = await Promise.all([
-		getIdeas(stageGroup.statuses as IdeaStatus[]),
-		getPipelineCounts(),
+		getIdeas(user.id, stageGroup.statuses as IdeaStatus[]),
+		getPipelineCounts(user.id),
 	]);
 
 	// In the archive: failed ideas surface first (they need attention),
@@ -40,8 +56,10 @@ const DashboardPage = async ({ searchParams }: Props) => {
 	const ideas =
 		stage === "archive"
 			? [...rawIdeas].sort((a, b) => {
-					if (a.status === "failed" && b.status !== "failed") return -1;
-					if (a.status !== "failed" && b.status === "failed") return 1;
+					if (a.status === "failed" && b.status !== "failed")
+						return -1;
+					if (a.status !== "failed" && b.status === "failed")
+						return 1;
 					return 0;
 				})
 			: rawIdeas;
@@ -65,9 +83,12 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				</Suspense>
 
 				<DiscoverButton />
-				<AddIdeaPanel />
+				<AddIdeaPanel userPlan={plan} />
 
-				<Button variant="outline" className="hover:bg-neutral-800">
+				<Button
+					variant="outline"
+					className="hover:bg-neutral-800 ml-auto"
+				>
 					<Link
 						href="/settings"
 						className="flex items-center gap-1.5 transition-opacity hover:opacity-75 shrink-0 text-muted"
@@ -76,6 +97,16 @@ const DashboardPage = async ({ searchParams }: Props) => {
 						Settings
 					</Link>
 				</Button>
+				<div className="flex items-center gap-4">
+					<PlanBadge />
+					<Show when="signed-in">
+						<UserButton
+							fallback={
+								<Skeleton className="w-7 h-7 rounded-full bg-muted" />
+							}
+						/>
+					</Show>
+				</div>
 			</header>
 
 			{/* Pipeline strip */}
@@ -92,7 +123,13 @@ const DashboardPage = async ({ searchParams }: Props) => {
 							{stageGroup.label}
 						</span>
 						<span className="text-xs ml-2.5 text-muted">
-							{stage === "archive" ? ideas.length : ideas.filter((i) => i.status !== "rejected" && i.status !== "failed").length}{" "}
+							{stage === "archive"
+								? ideas.length
+								: ideas.filter(
+										(i) =>
+											i.status !== "rejected" &&
+											i.status !== "failed",
+									).length}{" "}
 							ideas
 						</span>
 					</div>

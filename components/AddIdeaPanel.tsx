@@ -2,19 +2,27 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import IdeaChatbox from "./IdeaChatbox";
 import { addIdeaFromUrl } from "@/lib/actions/manual-idea";
 import { toastMessage } from "@/lib/utils";
+import { PLAN_LIMITS } from "@/lib/quota";
+import type { PlanType } from "@/lib/quota";
 
-const AddIdeaPanel = () => {
+interface Props {
+	userPlan: PlanType;
+}
+
+const AddIdeaPanel = ({ userPlan }: Props) => {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [url, setUrl] = useState("");
 	const [isPending, startTransition] = useTransition();
+
+	const canGenerateFromText = PLAN_LIMITS[userPlan].customQueries;
 
 	const handleUrlAdd = () => {
 		if (!url.trim()) return;
@@ -55,7 +63,6 @@ const AddIdeaPanel = () => {
 			</Button>
 
 			{/* Drop-down panel */}
-			{/*make this panel close when clicking outside */}
 			{open && (
 				<div className="absolute right-0 top-full mt-2 z-50 w-105 rounded-xl border border-border bg-card shadow-xl animate-slide-up border-l-script border-l-3">
 					<div className="px-4 pt-3.5 pb-1">
@@ -77,13 +84,16 @@ const AddIdeaPanel = () => {
 							</TabsTrigger>
 							<TabsTrigger
 								value="describe"
-								className="text-xs h-7 px-3"
+								className="text-xs h-7 px-3 gap-1.5"
 							>
 								✍️ Describe Idea
+								{!canGenerateFromText && (
+									<Lock size={11} className="text-muted" />
+								)}
 							</TabsTrigger>
 						</TabsList>
 
-						{/* ── Tab A: YouTube URL ── */}
+						{/* ── Tab A: YouTube URL — available on all plans ── */}
 						<TabsContent value="url" className="mt-0 space-y-2">
 							<p className="text-xs text-muted">
 								Paste any YouTube Shorts URL and we&apos;ll
@@ -115,17 +125,45 @@ const AddIdeaPanel = () => {
 							)}
 						</TabsContent>
 
-						{/* ── Tab B: Describe Idea ── */}
+						{/* ── Tab B: Describe Idea — Pro+ only ── */}
 						<TabsContent value="describe" className="mt-0">
-							<p className="text-xs text-muted mb-2">
-								Describe your concept, choose a niche, and AI
-								will generate a complete scored idea you can
-								edit before adding.
-							</p>
-							<IdeaChatbox
-								onSuccess={handleSuccess}
-								onError={handleError}
-							/>
+							{canGenerateFromText ? (
+								<>
+									<p className="text-xs text-muted mb-2">
+										Describe your concept, choose a niche,
+										and AI will generate a complete scored
+										idea you can edit before adding.
+									</p>
+									<IdeaChatbox
+										onSuccess={handleSuccess}
+										onError={handleError}
+									/>
+								</>
+							) : (
+								<div className="flex flex-col items-center gap-3 py-6 text-center">
+									<Lock size={22} className="text-muted" />
+									<div>
+										<p className="text-xs font-semibold text-text">
+											Pro feature
+										</p>
+										<p className="text-xs text-muted mt-0.5">
+											AI text-to-idea generation requires
+											a Pro or Business plan.
+										</p>
+									</div>
+									<button
+										onClick={() => {
+											setOpen(false);
+											// Navigate to the settings page and scroll to
+											// #billing — works from any page in the app.
+											window.location.href = "/settings#billing";
+										}}
+										className="text-xs text-publish hover:underline"
+									>
+										Upgrade to Pro →
+									</button>
+								</div>
+							)}
 						</TabsContent>
 					</Tabs>
 				</div>
