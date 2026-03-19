@@ -8,6 +8,7 @@ const QUEUE_NAME = "video_render_queue";
 const POLL_INTERVAL_MS = 3_000;
 const VISIBILITY_TIMEOUT_SEC = 360;
 const MAX_ATTEMPTS = 3;
+const BATCH_SIZE = 5; // read N jobs per tick, process highest priority first
 
 /** How often to check for scheduled uploads (ms).
  *  Upload slots are spaced ≥1 hour apart, so 5-minute checks
@@ -22,17 +23,21 @@ function db() {
 	);
 }
 
-async function readNextJob(): Promise<PgmqMessage<VideoRenderJob> | null> {
+/** Read up to BATCH_SIZE jobs and return them sorted highest priority first. */
+async function readNextBatch(): Promise<PgmqMessage<VideoRenderJob>[]> {
 	const { data, error } = await db().rpc("pgmq_read", {
 		queue_name: QUEUE_NAME,
 		vt: VISIBILITY_TIMEOUT_SEC,
-		qty: 1,
+		qty: BATCH_SIZE,
 	});
 	if (error) {
 		console.error("[worker] read error:", error.message);
-		return null;
+		return [];
 	}
-	return ((data as PgmqMessage<VideoRenderJob>[]) ?? [])[0] ?? null;
+	const msgs = (data as PgmqMessage<VideoRenderJob>[]) ?? [];
+	return msgs.sort(
+		(a, b) => (b.message.priority ?? 0) - (a.message.priority ?? 0),
+	);
 }
 
 async function ack(msgId: bigint) {
@@ -70,9 +75,9 @@ async function poll() {
 			}
 
 			// ── Video render queue ─────────────────────────────────────
-			const msg = await readNextJob();
+			const batch = await readNextBatch();
 
-			if (!msg) {
+			if (batch.length === 0) {
 				idle++;
 				if (idle % 20 === 0)
 					console.log("[worker] Idle…", new Date().toISOString());
@@ -81,37 +86,44 @@ async function poll() {
 			}
 
 			idle = 0;
-			const { idea_id, user_id } = msg.message;
 
-			if (msg.read_ct > MAX_ATTEMPTS) {
-				console.warn(
-					`[worker] Job ${msg.msg_id} exceeded max attempts`,
-				);
-				await archive(msg.msg_id);
-				await markFailed(idea_id, "Exceeded max retry attempts");
-				continue;
-			}
+			for (const msg of batch) {
+				const { idea_id, user_id } = msg.message;
 
-			console.log(
-				`\n[worker] Job ${msg.msg_id} | idea ${idea_id} | attempt ${msg.read_ct}`,
-			);
-
-			try {
-				await runVideoPipeline(idea_id, user_id);
-				await ack(msg.msg_id);
-				console.log(`[worker] ✓ Job ${msg.msg_id} done`);
-			} catch (err) {
-				const error = err instanceof Error ? err.message : String(err);
-				console.error(`[worker] ✗ Job ${msg.msg_id} failed:`, error);
-
-				if (msg.read_ct >= MAX_ATTEMPTS) {
-					await archive(msg.msg_id);
-					await markFailed(
-						idea_id,
-						`Failed after ${MAX_ATTEMPTS} attempts: ${error}`,
+				if (msg.read_ct > MAX_ATTEMPTS) {
+					console.warn(
+						`[worker] Job ${msg.msg_id} exceeded max attempts`,
 					);
+					await archive(msg.msg_id);
+					await markFailed(idea_id, "Exceeded max retry attempts");
+					continue;
 				}
-				// No ack = job reappears after visibility timeout for retry
+
+				console.log(
+					`\n[worker] Job ${msg.msg_id} | idea ${idea_id} | priority ${msg.message.priority ?? 0} | attempt ${msg.read_ct}`,
+				);
+
+				try {
+					await runVideoPipeline(idea_id, user_id);
+					await ack(msg.msg_id);
+					console.log(`[worker] ✓ Job ${msg.msg_id} done`);
+				} catch (err) {
+					const error =
+						err instanceof Error ? err.message : String(err);
+					console.error(
+						`[worker] ✗ Job ${msg.msg_id} failed:`,
+						error,
+					);
+
+					if (msg.read_ct >= MAX_ATTEMPTS) {
+						await archive(msg.msg_id);
+						await markFailed(
+							idea_id,
+							`Failed after ${MAX_ATTEMPTS} attempts: ${error}`,
+						);
+					}
+					// No ack = job reappears after visibility timeout for retry
+				}
 			}
 		} catch (err) {
 			console.error("[worker] Poll error:", err);

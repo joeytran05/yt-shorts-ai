@@ -16,7 +16,7 @@ function makeAdminClient() {
 export async function enqueueVideoRender(
 	ideaId: string,
 	userId: string,
-	priority: "normal" | "high" = "normal",
+	priority: number = 0,
 ): Promise<bigint> {
 	const client = makeAdminClient();
 	const message: VideoRenderJob = {

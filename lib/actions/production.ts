@@ -11,7 +11,7 @@ import {
 	db,
 } from "@/lib/supabase";
 import { getAuthContext } from "@/lib/auth";
-import { checkRenderQuota } from "@/lib/quota";
+import { checkRenderQuota, PLAN_LIMITS } from "@/lib/quota";
 import type { ActionResult, Idea } from "@/types";
 import { enqueueVideoRender } from "../queue";
 
@@ -58,7 +58,7 @@ export async function generateVoiceover(
 			throw new Error(`ElevenLabs ${res.status}: ${await res.text()}`);
 
 		const buf = await res.arrayBuffer();
-		const fileName = `voiceovers/${ideaId}-${Date.now()}.mp3`;
+		const fileName = `${userId}/voiceovers/${ideaId}-${Date.now()}.mp3`;
 
 		const { error: upErr } = await db.storage
 			.from("production-assets")
@@ -119,7 +119,7 @@ export async function generateVideo(
 	if (!idea.script_full) return { ok: false, error: "No script found" };
 
 	try {
-		const msgId = await enqueueVideoRender(ideaId, userId, "normal");
+		const msgId = await enqueueVideoRender(ideaId, userId, PLAN_LIMITS[plan].queuePriority);
 
 		const updated = await updateIdea(userId, ideaId, {
 			status: "generating_video",
