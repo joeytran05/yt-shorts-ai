@@ -67,7 +67,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 	return (
 		<>
 			{/* Topbar */}
-			<header className="sticky top-0 z-40 flex items-center gap-4 px-6 py-3.5 bg-bg border-b border-border">
+			<header className="sticky top-0 z-40 flex flex-wrap items-center gap-4 px-6 py-3.5 bg-bg border-b border-border">
 				<div className="shrink-0">
 					<p className="font-display text-lg font-black tracking-tight leading-none">
 						<span className="text-danger">▶</span>
@@ -78,12 +78,16 @@ const DashboardPage = async ({ searchParams }: Props) => {
 					</p>
 				</div>
 
-				<Suspense fallback={<div className="flex-1" />}>
-					<PipelineNav counts={counts} />
-				</Suspense>
+				<div className="hidden md:block">
+					<Suspense fallback={<div className="flex-1" />}>
+						<PipelineNav counts={counts} />
+					</Suspense>
+				</div>
 
-				<DiscoverButton />
-				<AddIdeaPanel userPlan={plan} />
+				<div className="hidden lg:flex gap-4">
+					<DiscoverButton />
+					<AddIdeaPanel userPlan={plan} />
+				</div>
 
 				<Button
 					variant="outline"
@@ -109,11 +113,23 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				</div>
 			</header>
 
-			{/* Pipeline strip */}
-			<PipelineStrip counts={counts} />
+			<div className="md:hidden not-sm:flex not-sm:justify-center px-6 py-3.5 bg-bg border-b border-border">
+				<Suspense fallback={<div className="flex-1" />}>
+					<PipelineNav counts={counts} />
+				</Suspense>
+			</div>
+
+			<div className="flex justify-center border-b border-border sm:justify-between">
+				{/* Pipeline strip */}
+				<PipelineStrip counts={counts} />
+				<div className="gap-4 px-6 py-4 hidden sm:max-lg:flex">
+					<DiscoverButton />
+					<AddIdeaPanel userPlan={plan} />
+				</div>
+			</div>
 
 			{/* Main */}
-			<main className="max-w-265 mx-auto px-6 pt-5 pb-12">
+			<main className="max-w-265 min-w-212.5 mx-auto px-6 pt-5 pb-12">
 				<div className="flex items-baseline justify-between mb-4">
 					<div>
 						<span
@@ -132,6 +148,11 @@ const DashboardPage = async ({ searchParams }: Props) => {
 									).length}{" "}
 							ideas
 						</span>
+					</div>
+
+					<div className="flex sm:hidden gap-4">
+						<DiscoverButton />
+						<AddIdeaPanel userPlan={plan} />
 					</div>
 				</div>
 

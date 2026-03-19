@@ -39,10 +39,6 @@ html {
 	--publish: #22c55e;
 	--danger: #ef4444;
 
-	/* Typography */
-	--font-mono: var(--font-mono);
-	--font-display: var(--font-display);
-
 	/* Radius */
 	--radius: 8px;
 }
@@ -71,6 +67,12 @@ html {
 	--font-display: var(--font-display);
 
 	--radius: var(--radius);
+}
+
+@theme {
+	--breakpoint-lg: 1660px;
+	--breakpoint-md: 1300px;
+	--breakpoint-sm: 1050px;
 }
 
 /* ────────────────────────────────────────────────

@@ -44,12 +44,9 @@ const PipelineNav = ({ counts }: Props) => {
 							</span>
 							{n > 0 && (
 								<span
-									className="flex items-center justify-center rounded-full text-black font-bold"
+									className="flex items-center justify-center rounded-full text-black font-bold w-3.75 h-3.75 text-[9px]"
 									style={{
 										background: sg.color,
-										width: 15,
-										height: 15,
-										fontSize: 9,
 									}}
 								>
 									{n}

@@ -19,7 +19,7 @@ const CLERK_PRICING_VARS = {
 	colorTextSecondary: "#52527a",
 	colorPrimary: "#22c55e",
 	colorDanger: "#ef4444",
-	colorNeutral: "#e0e0f0",
+	// colorNeutral: "#e0e0f0",
 	borderRadius: "8px",
 	fontFamily: "inherit",
 	fontSize: "13px",
@@ -29,8 +29,11 @@ const CLERK_PRICING_VARS = {
 // the rest of the settings panel.
 const CLERK_DARK_VARS = {
 	colorBackground: "#111120",
+	// colorBackground: "#D4D4E8",
+	// colorBackground: "#DADAEC",
 	colorInputBackground: "#0d0d18",
-	colorText: "#dde0f0",
+	// colorText: "#dde0f0",
+	colorText: "#ffffff",
 	colorTextSecondary: "#a0a0c8",
 	colorPrimary: "#22c55e",
 	colorDanger: "#ef4444",
@@ -67,7 +70,7 @@ export async function BillingPanel({ user, rendersUsed }: Props) {
 				</div>
 				{slug !== "free" && (
 					/* Wrap so we can target the Clerk-rendered <button> element */
-					<div className="[&>button]:text-xs [&>button]:px-3 [&>button]:py-1.5 [&>button]:rounded-lg [&>button]:border [&>button]:border-border [&>button]:bg-card [&>button]:text-text [&>button]:cursor-pointer [&>button:hover]:bg-card-hover [&>button]:transition-colors [&>button]:font-medium">
+					<div className="[&>button]:text-xs [&>button]:px-3 [&>button]:py-1.5 [&>button]:rounded-lg [&>button]:border [&>button]:border-border [&>button]:bg-card [&>button]:text-text [&>button]:cursor-pointer [&>button:hover]:bg-gray-800 [&>button]:transition-colors [&>button]:font-medium">
 						<SubscriptionDetailsButton
 							subscriptionDetailsProps={{
 								appearance: { variables: CLERK_DARK_VARS },

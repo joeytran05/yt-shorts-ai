@@ -40,7 +40,7 @@ const PipelineStrip = ({ counts }: { counts: PipelineCount[] }) => {
 			.reduce((s, c) => s + c.total, 0);
 
 	return (
-		<div className="flex items-center overflow-x-auto px-6 py-2.5 border-b border-border">
+		<div className="flex items-center px-6 py-2.5">
 			{ITEMS.map((item, i) => (
 				<div key={item.label} className="flex items-center">
 					{i > 0 && (
