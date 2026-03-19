@@ -23,12 +23,19 @@ export function QueryManager({ initial, userPlan }: Props) {
 
 	const canCustomize = PLAN_LIMITS[userPlan].customQueries;
 
-	const toggle = (i: number) =>
+	const toggle = (i: number) => {
+		const q = queries[i];
+		// Prevent enabling a 4th query
+		if (!q.enabled && atLimit) {
+			toastMessage("Maximum 3 queries can be active at once", false);
+			return;
+		}
 		setQueries((prev) =>
-			prev.map((q, idx) =>
-				idx === i ? { ...q, enabled: !q.enabled } : q,
+			prev.map((item, idx) =>
+				idx === i ? { ...item, enabled: !item.enabled } : item,
 			),
 		);
+	};
 
 	const remove = (i: number) =>
 		setQueries((prev) => prev.filter((_, idx) => idx !== i));
@@ -54,7 +61,9 @@ export function QueryManager({ initial, userPlan }: Props) {
 			toastMessage(msg, result.ok);
 		});
 
+	const MAX_ENABLED = 3;
 	const enabledCount = queries.filter((q) => q.enabled).length;
+	const atLimit = enabledCount >= MAX_ENABLED;
 
 	return (
 		<div className="rounded-xl p-5 bg-card border border-border">
@@ -64,7 +73,7 @@ export function QueryManager({ initial, userPlan }: Props) {
 						YouTube Search Queries
 					</h2>
 					<p className="text-xs mt-0.5 text-muted">
-						{enabledCount} of {queries.length} enabled
+						{enabledCount}/{MAX_ENABLED} active
 					</p>
 				</div>
 				<Button

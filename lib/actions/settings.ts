@@ -29,11 +29,20 @@ export async function saveQueries(
 	try {
 		const { userId, plan } = await getAuthContext();
 
-		// Gate custom queries to Pro+ plans (server-side enforcement)
+		// Gate custom queries to paid plans (server-side enforcement)
 		if (!PLAN_LIMITS[plan].customQueries && queries.some((q) => q.custom)) {
 			return {
 				ok: false,
-				error: "Custom queries require a Pro or Business plan.",
+				error: "Custom queries require a Starter or higher plan.",
+			};
+		}
+
+		// Max 3 enabled queries across all plans
+		const enabledCount = queries.filter((q) => q.enabled).length;
+		if (enabledCount > 3) {
+			return {
+				ok: false,
+				error: "Maximum 3 queries can be enabled at once.",
 			};
 		}
 
@@ -59,7 +68,12 @@ export async function saveGeneralSettings(
 ): Promise<ActionResult<Settings>> {
 	try {
 		const { userId } = await getAuthContext();
-		const data = await updateSettings(userId, patch);
+		// Clamp per_query to 1–3
+		const safePatch = {
+			...patch,
+			per_query: Math.max(1, Math.min(3, patch.per_query)),
+		};
+		const data = await updateSettings(userId, safePatch);
 		revalidatePath("/settings");
 		return { ok: true, data };
 	} catch (err) {

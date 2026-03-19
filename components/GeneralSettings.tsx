@@ -19,7 +19,7 @@ export function GeneralSettings({ initial }: { initial: Settings }) {
 		start(async () => {
 			const result = await saveGeneralSettings({
 				min_views: parseInt(minViews) || 100000,
-				per_query: parseInt(perQuery) || 15,
+				per_query: Math.max(1, Math.min(3, parseInt(perQuery) || 1)),
 				auto_approve_above: autoApprove ? parseInt(autoApprove) : null,
 				target_niches: initial.target_niches,
 			});
@@ -53,10 +53,12 @@ export function GeneralSettings({ initial }: { initial: Settings }) {
 				/>
 				<Field
 					label="Results Per Query"
-					hint="How many videos to fetch per search query (5–50)"
+					hint="Videos fetched per search query (1–3)"
 					value={perQuery}
 					onChange={setPerQuery}
 					type="number"
+					min={1}
+					max={3}
 				/>
 				<Field
 					label="Auto-approve Viral Score ≥"
@@ -78,6 +80,8 @@ function Field({
 	onChange,
 	type = "text",
 	placeholder,
+	min,
+	max,
 }: {
 	label: string;
 	hint: string;
@@ -85,6 +89,8 @@ function Field({
 	onChange: (v: string) => void;
 	type?: string;
 	placeholder?: string;
+	min?: number;
+	max?: number;
 }) {
 	return (
 		<div>
@@ -96,6 +102,8 @@ function Field({
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				placeholder={placeholder}
+				min={min}
+				max={max}
 				className="h-8 text-xs w-48"
 			/>
 			<p className="text-xs mt-1 text-muted">{hint}</p>
