@@ -194,7 +194,7 @@ export async function runVideoPipeline(
 	);
 
 	// ── Upload compressed video ───────────────────────────────────
-	const fileName = `videos/${ideaId}-${Date.now()}.mp4`;
+	const fileName = `${userId}/videos/${ideaId}-${Date.now()}.mp4`;
 	const client = db();
 
 	const { error: upErr } = await client.storage

@@ -97,7 +97,7 @@ export async function uploadMusicTrack(
 		const duration = await getAudioDuration(file);
 
 		// Upload to Supabase Storage
-		const fileName = `music/${mood}-${Date.now()}-${file.name}`;
+		const fileName = `${userId}/music/${mood}-${Date.now()}-${file.name}`;
 		const buf = await file.arrayBuffer();
 
 		const { error: upErr } = await db.storage
