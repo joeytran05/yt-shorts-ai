@@ -69,6 +69,7 @@ export default async function SettingsPage({ searchParams }: Props) {
 				<div className="flex flex-col gap-5">
 					<ChannelManager
 						initial={channelsResult.ok ? channelsResult.data : []}
+						userPlan={plan}
 						channelConnected={channel_connected ?? null}
 						channelError={channel_error ?? null}
 					/>
