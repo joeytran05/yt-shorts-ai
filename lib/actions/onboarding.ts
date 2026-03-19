@@ -1,7 +1,6 @@
 "use server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { db, getUser } from "@/lib/supabase";
 import type { User, YoutubeQuery } from "@/types";
 
