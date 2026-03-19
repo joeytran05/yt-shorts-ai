@@ -10,7 +10,6 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import type { PlanType } from "@/lib/quota";
 
 export interface AuthContext {
@@ -26,11 +25,13 @@ export async function getAuthContext(): Promise<AuthContext> {
 	const { userId, has, redirectToSignIn } = await auth();
 	if (!userId) return redirectToSignIn();
 
-	const plan: PlanType = has({ plan: "business" })
-		? "business"
-		: has({ plan: "pro" })
-			? "pro"
-			: "free";
+	const plan: PlanType = has({ plan: "pro" })
+		? "pro"
+		: has({ plan: "creator" })
+			? "creator"
+			: has({ plan: "starter" })
+				? "starter"
+				: "free";
 
 	return { userId, plan };
 }

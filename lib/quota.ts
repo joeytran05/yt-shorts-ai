@@ -8,34 +8,54 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-export type PlanType = "free" | "pro" | "business";
+export type PlanType = "free" | "starter" | "creator" | "pro";
 
-export const PLAN_LIMITS: Record<
-	PlanType,
-	{
-		renders: number;
-		customQueries: boolean;
-		musicUpload: boolean;
-		scheduling: boolean;
-	}
-> = {
+export interface PlanLimit {
+	rendersPerMonth: number; // -1 = unlimited
+	channels: number;
+	customQueries: boolean;
+	musicUpload: boolean;
+	scheduling: boolean;
+	abTesting: boolean;
+	queuePriority: 0 | 1 | 2 | 3;
+}
+
+export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
 	free: {
-		renders: 3,
+		rendersPerMonth: 3,
+		channels: 1,
 		customQueries: false,
 		musicUpload: false,
 		scheduling: false,
+		abTesting: false,
+		queuePriority: 0,
+	},
+	starter: {
+		rendersPerMonth: 20,
+		channels: 1,
+		customQueries: true,
+		musicUpload: true,
+		scheduling: true,
+		abTesting: false,
+		queuePriority: 1,
+	},
+	creator: {
+		rendersPerMonth: 60,
+		channels: 3,
+		customQueries: true,
+		musicUpload: true,
+		scheduling: true,
+		abTesting: true,
+		queuePriority: 2,
 	},
 	pro: {
-		renders: 30,
+		rendersPerMonth: 200,
+		channels: 10,
 		customQueries: true,
 		musicUpload: true,
 		scheduling: true,
-	},
-	business: {
-		renders: Infinity,
-		customQueries: true,
-		musicUpload: true,
-		scheduling: true,
+		abTesting: true,
+		queuePriority: 3,
 	},
 };
 
@@ -89,7 +109,7 @@ export async function checkRenderQuota(
 		return null; // fresh period — allow
 	}
 
-	const limit = PLAN_LIMITS[plan].renders;
+	const limit = PLAN_LIMITS[plan].rendersPerMonth;
 	if (user.videos_rendered_this_period >= limit) {
 		return `Monthly render limit reached (${limit} / ${limit}). Upgrade to Pro for more renders.`;
 	}

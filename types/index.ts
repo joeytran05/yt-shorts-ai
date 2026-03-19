@@ -2,7 +2,7 @@ import { SceneData } from "./scenes";
 
 // ── SaaS / billing types ─────────────────────────────────────────
 
-export type PlanType = "free" | "pro" | "business";
+export type PlanType = "free" | "starter" | "creator" | "pro";
 
 export interface User {
 	id: string; // Clerk userId (user_2abc...)
