@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getIdeas, getPipelineCounts } from "@/lib/supabase";
+import { getIdeas, getPipelineCounts, getDiscoveryCooldown } from "@/lib/supabase";
 import type { IdeaStatus } from "@/types";
 import PipelineNav from "@/components/PipelineNav";
 import PipelineStrip from "@/components/PipelineStrip";
@@ -46,9 +46,10 @@ const DashboardPage = async ({ searchParams }: Props) => {
 	const stageGroup =
 		STAGE_GROUPS.find((s) => s.id === stage) ?? STAGE_GROUPS[0];
 
-	const [rawIdeas, counts] = await Promise.all([
+	const [rawIdeas, counts, discoveryCooldown] = await Promise.all([
 		getIdeas(user.id, stageGroup.statuses as IdeaStatus[]),
 		getPipelineCounts(user.id),
+		getDiscoveryCooldown(user.id),
 	]);
 
 	// In the archive: failed ideas surface first (they need attention),
@@ -85,7 +86,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				</div>
 
 				<div className="hidden lg:flex gap-4">
-					<DiscoverButton />
+					<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 					<AddIdeaPanel userPlan={plan} />
 				</div>
 
@@ -123,7 +124,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 				{/* Pipeline strip */}
 				<PipelineStrip counts={counts} />
 				<div className="gap-4 px-6 py-4 hidden sm:max-lg:flex">
-					<DiscoverButton />
+					<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 					<AddIdeaPanel userPlan={plan} />
 				</div>
 			</div>
@@ -151,7 +152,7 @@ const DashboardPage = async ({ searchParams }: Props) => {
 					</div>
 
 					<div className="flex sm:hidden gap-4">
-						<DiscoverButton />
+						<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 						<AddIdeaPanel userPlan={plan} />
 					</div>
 				</div>

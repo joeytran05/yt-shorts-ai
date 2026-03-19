@@ -240,6 +240,30 @@ export async function getRecentRuns(
 	return (data ?? []) as ScrapeRun[];
 }
 
+/**
+ * Returns the ISO timestamp when the user's 12-hour discovery cooldown expires,
+ * or null if they are free to run discovery now.
+ */
+export async function getDiscoveryCooldown(
+	userId: string,
+): Promise<string | null> {
+	const { data } = await db
+		.from("scrape_runs")
+		.select("completed_at")
+		.eq("user_id", userId)
+		.eq("status", "completed")
+		.order("completed_at", { ascending: false })
+		.limit(1)
+		.maybeSingle();
+
+	if (!data?.completed_at) return null;
+
+	const nextAllowed = new Date(
+		new Date(data.completed_at).getTime() + 12 * 60 * 60 * 1000,
+	);
+	return nextAllowed > new Date() ? nextAllowed.toISOString() : null;
+}
+
 // ── PRODUCTION JOBS ──────────────────────────────────────────────
 
 export async function createProductionJob(

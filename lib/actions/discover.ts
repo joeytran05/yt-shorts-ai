@@ -10,6 +10,7 @@ import {
 	updateIdea,
 	db,
 	getSettings,
+	getDiscoveryCooldown,
 } from "@/lib/supabase";
 import { getAuthContext } from "@/lib/auth";
 import type { ActionResult, DiscoverResult, Idea } from "@/types";
@@ -28,6 +29,23 @@ export async function discoverIdeas(
 	}
 
 	const t0 = Date.now();
+
+	// 12-hour cooldown — applies to all plans
+	const cooldownUntil = await getDiscoveryCooldown(userId);
+	if (cooldownUntil) {
+		const remaining = new Date(cooldownUntil);
+		const h = Math.floor(
+			(remaining.getTime() - Date.now()) / (1000 * 60 * 60),
+		);
+		const m = Math.floor(
+			((remaining.getTime() - Date.now()) % (1000 * 60 * 60)) /
+				(1000 * 60),
+		);
+		return {
+			ok: false,
+			error: `Discovery is on cooldown. Next run available in ${h}h ${m}m.`,
+		};
+	}
 
 	// Load queries + options from settings
 	const settings = await getSettings(userId);

@@ -51,7 +51,7 @@ export async function BillingPanel({ user, rendersUsed }: Props) {
 
 	const slug = (subscription?.subscriptionItems[0]?.plan?.slug ??
 		"free") as PlanType;
-	const limit = PLAN_LIMITS[slug].renders;
+	const limit = PLAN_LIMITS[slug].rendersPerMonth;
 	const limitLabel = limit === Infinity ? "∞" : String(limit);
 
 	return (
