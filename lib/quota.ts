@@ -8,7 +8,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-export type PlanType = "free" | "starter" | "creator" | "pro";
+export type PlanType = "free" | "creator" | "pro";
 
 export interface PlanLimit {
 	rendersPerMonth: number; // -1 = unlimited
@@ -30,23 +30,14 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
 		abTesting: false,
 		queuePriority: 0,
 	},
-	starter: {
-		rendersPerMonth: 20,
-		channels: 1,
+	creator: {
+		rendersPerMonth: 30,
+		channels: 3,
 		customQueries: true,
 		musicUpload: true,
 		scheduling: true,
 		abTesting: false,
 		queuePriority: 1,
-	},
-	creator: {
-		rendersPerMonth: 60,
-		channels: 3,
-		customQueries: true,
-		musicUpload: true,
-		scheduling: true,
-		abTesting: true,
-		queuePriority: 2,
 	},
 	pro: {
 		rendersPerMonth: 200,
@@ -111,7 +102,7 @@ export async function checkRenderQuota(
 
 	const limit = PLAN_LIMITS[plan].rendersPerMonth;
 	if (user.videos_rendered_this_period >= limit) {
-		return `Monthly render limit reached (${limit} / ${limit}). Upgrade to Pro for more renders.`;
+		return `Monthly render limit reached (${limit} / ${limit}). Upgrade to Creator or Pro for more renders.`;
 	}
 
 	return null;

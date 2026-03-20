@@ -29,9 +29,7 @@ export async function getAuthContext(): Promise<AuthContext> {
 		? "pro"
 		: has({ plan: "creator" })
 			? "creator"
-			: has({ plan: "starter" })
-				? "starter"
-				: "free";
+			: "free";
 
 	return { userId, plan };
 }
