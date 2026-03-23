@@ -3,12 +3,14 @@ import { MusicLibrary } from "@/components/MusicLibrary";
 import { QueryManager } from "@/components/QueryManager";
 import { ChannelManager } from "@/components/ChannelManager";
 import { BillingPanel } from "@/components/BillingPanel";
+import { FeatureLock } from "@/components/FeatureLock";
 import { Button } from "@/components/ui/button";
 import { getSettings, getMusicTracksForUser } from "@/lib/supabase";
 import Link from "next/link";
 import { getChannels } from "@/lib/actions/channels";
 import { ensureUserExists } from "@/lib/actions/onboarding";
 import { getAuthContext } from "@/lib/auth";
+import { PLAN_LIMITS } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 
 interface Props {
@@ -61,24 +63,40 @@ export default async function SettingsPage({ searchParams }: Props) {
 			<div className="flex justify-center gap-5">
 				<div className="flex flex-col gap-5">
 					<GeneralSettings initial={settings} />
-					<QueryManager
-						initial={settings.youtube_queries}
-						userPlan={plan}
-					/>
-				</div>
-				<div className="flex flex-col gap-5">
 					<ChannelManager
 						initial={channelsResult.ok ? channelsResult.data : []}
 						userPlan={plan}
 						channelConnected={channel_connected ?? null}
 						channelError={channel_error ?? null}
 					/>
-					<MusicLibrary initial={tracks} userPlan={plan} />
-					<BillingPanel
-						user={user}
-						rendersUsed={user.videos_rendered_this_period}
-					/>
+					{PLAN_LIMITS[plan].musicUpload ? (
+						<MusicLibrary initial={tracks} userPlan={plan} />
+					) : (
+						<FeatureLock feature="Music library &amp; custom uploads">
+							<MusicLibrary initial={tracks} userPlan={plan} />
+						</FeatureLock>
+					)}
 				</div>
+				{PLAN_LIMITS[plan].customQueries ? (
+					<QueryManager
+						initial={settings.youtube_queries}
+						userPlan={plan}
+					/>
+				) : (
+					<FeatureLock feature="Custom search queries">
+						<QueryManager
+							initial={settings.youtube_queries}
+							userPlan={plan}
+						/>
+					</FeatureLock>
+				)}
+			</div>
+
+			<div className="mt-10 flex flex-col gap-5">
+				<BillingPanel
+					user={user}
+					rendersUsed={user.videos_rendered_this_period}
+				/>
 			</div>
 		</main>
 	);

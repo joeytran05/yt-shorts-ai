@@ -1,5 +1,9 @@
 import { Suspense } from "react";
-import { getIdeas, getPipelineCounts, getDiscoveryCooldown } from "@/lib/supabase";
+import {
+	getIdeas,
+	getPipelineCounts,
+	getDiscoveryCooldown,
+} from "@/lib/supabase";
 import type { IdeaStatus } from "@/types";
 import PipelineNav from "@/components/PipelineNav";
 import PipelineStrip from "@/components/PipelineStrip";
@@ -13,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { ensureUserExists } from "@/lib/actions/onboarding";
 import { getAuthContext } from "@/lib/auth";
 import { PlanBadge } from "@/components/PlanBadge";
+import { UsageBar } from "@/components/UsageBar";
+import { PLAN_LIMITS } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { UserButton, Show } from "@clerk/nextjs";
@@ -85,7 +91,10 @@ const DashboardPage = async ({ searchParams }: Props) => {
 					</Suspense>
 				</div>
 
-				<div className="hidden lg:flex gap-4">
+				<div
+					className="hidden lg:flex gap-4"
+					data-tutorial="discover-btn"
+				>
 					<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 					<AddIdeaPanel userPlan={plan} />
 				</div>
@@ -165,6 +174,13 @@ const DashboardPage = async ({ searchParams }: Props) => {
 					expandId={expand}
 				/>
 			</main>
+			<div className="fixed bottom-6 right-6 z-50">
+				<UsageBar
+					used={user.videos_rendered_this_period}
+					limit={PLAN_LIMITS[plan].rendersPerMonth}
+					plan={plan}
+				/>
+			</div>
 		</>
 	);
 };

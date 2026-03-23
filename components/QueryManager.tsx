@@ -66,7 +66,7 @@ export function QueryManager({ initial, userPlan }: Props) {
 	const atLimit = enabledCount >= MAX_ENABLED;
 
 	return (
-		<div className="rounded-xl p-5 bg-card border border-border">
+		<div className="rounded-xl p-5 min-w-3/10 bg-card border border-border">
 			<div className="flex items-center justify-between mb-4">
 				<div>
 					<h2 className="text-sm font-semibold text-text">
@@ -114,9 +114,10 @@ export function QueryManager({ initial, userPlan }: Props) {
 					</span>
 					<button
 						onClick={() =>
-							document
-								.getElementById("billing")
-								?.scrollIntoView({ behavior: "smooth", block: "start" })
+							document.getElementById("billing")?.scrollIntoView({
+								behavior: "smooth",
+								block: "start",
+							})
 						}
 						className="text-xs text-publish hover:underline shrink-0"
 					>
