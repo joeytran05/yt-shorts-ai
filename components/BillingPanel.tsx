@@ -5,6 +5,7 @@ import { PLAN_LIMITS } from "@/lib/quota";
 import type { PlanType } from "@/lib/quota";
 import { clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { dark } from "@clerk/ui/themes";
 
 interface Props {
 	user: User;
@@ -12,28 +13,13 @@ interface Props {
 }
 
 const CLERK_PRICING_VARS = {
-	colorBackground: "#ffffff",
-	colorInputBackground: "#f4f4f8",
-	colorText: "#111120",
-	colorTextSecondary: "#52527a",
+	colorBackground: "#0d0d18",
 	colorPrimary: "#22c55e",
 	colorDanger: "#ef4444",
-	borderRadius: "8px",
-	fontFamily: "inherit",
-	fontSize: "13px",
 } as const;
 
 const CLERK_DARK_VARS = {
-	colorBackground: "#ffffff",
-	colorInputBackground: "#0d0d18",
-	colorText: "#ffffff",
-	colorTextSecondary: "#a0a0c8",
 	colorPrimary: "#22c55e",
-	colorDanger: "#ef4444",
-	colorNeutral: "#2d2d50",
-	borderRadius: "8px",
-	fontFamily: "inherit",
-	fontSize: "13px",
 } as const;
 
 const PLAN_FEATURES: Record<string, { icon: string; label: string }[]> = {
@@ -103,7 +89,10 @@ export async function BillingPanel({ user, rendersUsed }: Props) {
 					<div className="[&>button]:text-xs [&>button]:px-3 [&>button]:py-1.5 [&>button]:rounded-lg [&>button]:border [&>button]:border-border [&>button]:bg-card [&>button]:text-text [&>button]:cursor-pointer [&>button:hover]:bg-gray-800 [&>button]:transition-colors [&>button]:font-medium">
 						<SubscriptionDetailsButton
 							subscriptionDetailsProps={{
-								appearance: { variables: CLERK_DARK_VARS },
+								appearance: {
+									theme: dark,
+									variables: CLERK_DARK_VARS,
+								},
 							}}
 						>
 							Manage Billing
@@ -219,7 +208,7 @@ export async function BillingPanel({ user, rendersUsed }: Props) {
 				)}
 				<PricingTable
 					newSubscriptionRedirectUrl="/dashboard"
-					appearance={{ variables: CLERK_PRICING_VARS }}
+					appearance={{ theme: dark, variables: CLERK_PRICING_VARS }}
 				/>
 			</div>
 		</div>
