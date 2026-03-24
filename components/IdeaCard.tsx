@@ -56,6 +56,8 @@ interface Props {
 	onToggleSelect?: () => void;
 	/** Auto-expand the card on mount (used after navigate-and-focus). */
 	defaultOpen?: boolean;
+	/** When true, action buttons call tutorial helpers instead of real APIs. */
+	isTutorial?: boolean;
 }
 
 const IdeaCard = ({
@@ -66,9 +68,10 @@ const IdeaCard = ({
 	selected,
 	onToggleSelect,
 	defaultOpen,
+	isTutorial,
 }: Props) => {
 	const router = useRouter();
-	const [open, setOpen] = useState(defaultOpen ?? false);
+	const [open, setOpen] = useState(defaultOpen ?? isTutorial ?? false);
 	const [local, setLocal] = useState(idea);
 
 	// Sync when realtime pushes an update from outside
@@ -305,6 +308,7 @@ const IdeaCard = ({
 							hasPerformance={!!local.yt_views}
 							onResult={onToast}
 							onUpdate={handleUpdate}
+							isTutorial={isTutorial}
 						/>
 					)}
 				</div>

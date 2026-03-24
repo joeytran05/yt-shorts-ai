@@ -214,24 +214,32 @@ const IdeaList = ({
 
 			{/* ── Idea cards ── */}
 			<div className="flex flex-col gap-2 animate-slide-up">
-				{ideas.map((idea) => (
-					<IdeaCard
-						key={idea.id}
-						idea={idea}
-						stageColor={stageColor}
-						onUpdate={handleUpdate}
-						onToast={showToast}
-						selected={
-							selectionMode ? selectedIds.has(idea.id) : undefined
-						}
-						onToggleSelect={
-							selectionMode
-								? () => toggleSelect(idea.id)
-								: undefined
-						}
-						defaultOpen={expandId === idea.id}
-					/>
-				))}
+				{ideas.map((idea) => {
+					const isTutorial = idea.tags?.includes("__tutorial__") ?? false;
+					return (
+						<div
+							key={idea.id}
+							{...(isTutorial ? { "data-tutorial": "tutorial-idea" } : {})}
+						>
+							<IdeaCard
+								idea={idea}
+								stageColor={stageColor}
+								onUpdate={handleUpdate}
+								onToast={showToast}
+								selected={
+									selectionMode ? selectedIds.has(idea.id) : undefined
+								}
+								onToggleSelect={
+									selectionMode
+										? () => toggleSelect(idea.id)
+										: undefined
+								}
+								defaultOpen={expandId === idea.id}
+								isTutorial={isTutorial}
+							/>
+						</div>
+					);
+				})}
 			</div>
 
 			{/* ── Bulk action bar — floats at bottom when ideas are selected ── */}

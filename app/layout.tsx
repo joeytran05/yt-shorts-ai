@@ -2,13 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { DM_Mono, Syne } from "next/font/google";
-import {
-	ClerkProvider,
-	Show,
-	SignInButton,
-	SignUpButton,
-	UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider, Show, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 
 const dmMono = DM_Mono({
 	subsets: ["latin"],
@@ -68,6 +63,9 @@ export default function RootLayout({
 
 					{children}
 					<Toaster />
+					<Show when="signed-in">
+						<TutorialOverlay />
+					</Show>
 				</ClerkProvider>
 			</body>
 		</html>

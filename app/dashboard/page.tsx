@@ -132,7 +132,10 @@ const DashboardPage = async ({ searchParams }: Props) => {
 			<div className="flex justify-center border-b border-border sm:justify-between">
 				{/* Pipeline strip */}
 				<PipelineStrip counts={counts} />
-				<div className="gap-4 px-6 py-4 hidden sm:max-lg:flex">
+				<div
+					className="gap-4 px-6 py-4 hidden sm:max-lg:flex"
+					data-tutorial="discover-btn"
+				>
 					<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 					<AddIdeaPanel userPlan={plan} />
 				</div>
@@ -160,7 +163,10 @@ const DashboardPage = async ({ searchParams }: Props) => {
 						</span>
 					</div>
 
-					<div className="flex sm:hidden gap-4">
+					<div
+						className="flex sm:hidden gap-4"
+						data-tutorial="discover-btn"
+					>
 						<DiscoverButton nextDiscoveryAt={discoveryCooldown} />
 						<AddIdeaPanel userPlan={plan} />
 					</div>

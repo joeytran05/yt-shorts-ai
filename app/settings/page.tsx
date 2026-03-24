@@ -4,6 +4,7 @@ import { QueryManager } from "@/components/QueryManager";
 import { ChannelManager } from "@/components/ChannelManager";
 import { BillingPanel } from "@/components/BillingPanel";
 import { FeatureLock } from "@/components/FeatureLock";
+import { RestartTutorialButton } from "@/components/RestartTutorialButton";
 import { Button } from "@/components/ui/button";
 import { getSettings, getMusicTracksForUser } from "@/lib/supabase";
 import Link from "next/link";
@@ -50,14 +51,17 @@ export default async function SettingsPage({ searchParams }: Props) {
 						queries, and more.
 					</p>
 				</div>
-				<Button variant="outline" className="hover:bg-muted">
-					<Link
-						href="/dashboard"
-						className="transition-opacity hover:opacity-75 shrink-0"
-					>
-						Back
-					</Link>
-				</Button>
+				<div className="flex items-center gap-3">
+					<RestartTutorialButton />
+					<Button variant="outline" className="hover:bg-muted">
+						<Link
+							href="/dashboard"
+							className="transition-opacity hover:opacity-75 shrink-0"
+						>
+							Back
+						</Link>
+					</Button>
+				</div>
 			</div>
 
 			<div className="flex justify-center gap-5">

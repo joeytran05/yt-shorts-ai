@@ -26,6 +26,7 @@ import {
 } from "@/lib/actions/production";
 import { scheduleUpload, uploadToYouTube } from "@/lib/actions/publish";
 import { fetchVideoMetrics } from "@/lib/actions/performance";
+import { advanceTutorialIdea, setTutorialStep } from "@/lib/actions/tutorial";
 
 interface Props {
 	ideaId: string;
@@ -36,6 +37,8 @@ interface Props {
 	hasPerformance: boolean;
 	onResult: (msg: string, ok: boolean) => void;
 	onUpdate: (patch: Partial<Idea>) => void;
+	/** When true, action buttons call tutorial helpers instead of real APIs. */
+	isTutorial?: boolean;
 }
 
 const ActionButtons = ({
@@ -47,6 +50,7 @@ const ActionButtons = ({
 	hasPerformance,
 	onResult,
 	onUpdate,
+	isTutorial,
 }: Props) => {
 	const [isPending, startTransition] = useTransition();
 	const [rejectReason, setRejectReason] = useState("");
@@ -70,7 +74,37 @@ const ActionButtons = ({
 		});
 
 	// STAGE 1 — Approve / Reject scored idea
-	if (status === "scored" || status === "discovered")
+	if (status === "scored" || status === "discovered") {
+		if (isTutorial)
+			return (
+				<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
+					<Button
+						size="sm"
+						disabled={isPending}
+						className="font-bold bg-publish text-[#071a10] hover:bg-publish/90"
+						onClick={() =>
+							run(async () => {
+								await advanceTutorialIdea(ideaId, "scripted");
+								await setTutorialStep("script");
+								window.dispatchEvent(
+									new CustomEvent("tutorial-step-changed", {
+										detail: { step: "script" },
+									}),
+								);
+								return {
+									ok: true,
+									data: {
+										status: "scripted" as IdeaStatus,
+									},
+								};
+							})
+						}
+					>
+						{isPending ? "⏳ Scripting…" : "✓ Approve → Script"}
+					</Button>
+				</div>
+			);
+
 		return (
 			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
 				<Input
@@ -98,9 +132,43 @@ const ActionButtons = ({
 				</Button>
 			</div>
 		);
+	}
 
 	// STAGE 2 — Trigger voiceover + video + captions from scripted idea
-	if (status === "scripted")
+	if (status === "scripted") {
+		if (isTutorial)
+			return (
+				<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
+					<Button
+						size="sm"
+						disabled={isPending}
+						className="bg-prod text-white hover:bg-prod/90"
+						onClick={() =>
+							run(async () => {
+								await advanceTutorialIdea(
+									ideaId,
+									"ready_to_publish",
+								);
+								await setTutorialStep("review");
+								window.dispatchEvent(
+									new CustomEvent("tutorial-step-changed", {
+										detail: { step: "review" },
+									}),
+								);
+								return {
+									ok: true,
+									data: {
+										status: "ready_to_publish" as IdeaStatus,
+									},
+								};
+							})
+						}
+					>
+						{isPending ? "⏳ Producing…" : "🎤 Generate Voice"}
+					</Button>
+				</div>
+			);
+
 		return (
 			<div className="flex items-center gap-2 pt-3.5 mt-3.5 flex-wrap border-t border-border">
 				<Select value={voiceId} onValueChange={setVoiceId}>
@@ -142,6 +210,7 @@ const ActionButtons = ({
 				)}
 			</div>
 		);
+	}
 
 	// STAGE 3 — Final review approve / request changes
 	if (status === "produced")
