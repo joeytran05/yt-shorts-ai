@@ -13,7 +13,11 @@ interface Props {
  * Wraps a settings section with a lock overlay when the user doesn't have access.
  * Pass `locked={false}` (i.e. don't render this component) when the user has access.
  */
-export function FeatureLock({ feature, requiredPlan = "creator", children }: Props) {
+export function FeatureLock({
+	feature,
+	requiredPlan = "creator",
+	children,
+}: Props) {
 	const planLabel = requiredPlan === "pro" ? "Pro" : "Creator";
 	const planColor =
 		requiredPlan === "pro"
@@ -37,9 +41,10 @@ export function FeatureLock({ feature, requiredPlan = "creator", children }: Pro
 						{planLabel} feature
 					</span>
 				</div>
-				<p className="text-xs text-muted text-center max-w-[200px]">
+				<p className="text-xs text-muted text-center max-w-50">
 					{feature} is available on the{" "}
-					<strong className="text-text">{planLabel}</strong> plan and above.
+					<strong className="text-text">{planLabel}</strong> plan and
+					above.
 				</p>
 				<Link
 					href="/settings#billing"

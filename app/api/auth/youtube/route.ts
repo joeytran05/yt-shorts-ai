@@ -14,9 +14,7 @@ export async function GET(req: NextRequest) {
 		? "pro"
 		: has({ plan: "creator" })
 			? "creator"
-			: has({ plan: "starter" })
-				? "starter"
-				: "free";
+			: "free";
 
 	const db = createClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,

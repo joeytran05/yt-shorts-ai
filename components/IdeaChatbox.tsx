@@ -10,7 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { NICHE_EMOJI } from "@/types";
+import { NICHE_EMOJI } from "@/constants";
 import type { NicheType } from "@/types";
 import { generateIdeaAction, addIdeaFromText } from "@/lib/actions/manual-idea";
 

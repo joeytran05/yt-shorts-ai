@@ -10,7 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { ELEVENLABS_VOICES, OPTIMAL_UPLOAD_TIMES } from "@/types";
+import { ELEVENLABS_VOICES, OPTIMAL_UPLOAD_TIMES } from "@/constants";
 import type { IdeaStatus, Idea } from "@/types";
 import {
 	approveIdea,

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
 		remotePatterns: [
 			{ hostname: "i.ytimg.com" },
 			{ hostname: "yt3.ggpht.com" },
+			{ hostname: "picsum.photos" },
 		],
 	},
 	experimental: {

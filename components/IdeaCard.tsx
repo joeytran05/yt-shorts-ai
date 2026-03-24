@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Idea, IdeaStatus } from "@/types";
-import { NICHE_EMOJI, STATUS_BADGE } from "@/types";
+import { NICHE_EMOJI, STATUS_BADGE } from "@/constants";
 import { STAGE_GROUPS } from "@/constants";
 import ScoreRing from "./ScoreRing";
 import PerformancePanel, { getPerformanceTag } from "./PerformancePanel";
