@@ -63,9 +63,17 @@ export async function renderShortsVideo(input: {
 		timeoutInMilliseconds: 180_000,
 		// Cap how much decoded video Remotion keeps in memory at once
 		// Default is unlimited — 256MB prevents 4K frames from piling up
-		offthreadVideoCacheSizeInBytes: 128 * 1024 * 1024,
+		offthreadVideoCacheSizeInBytes: 64 * 1024 * 1024,
 		chromiumOptions: {
 			disableWebSecurity: true,
+			args: [
+				"--no-sandbox",
+				"--disable-gpu",
+				"--disable-dev-shm-usage",
+				"--single-process",
+				"--disable-software-rasterizer",
+				"--js-flags=--max-old-space-size=256",
+			],
 		},
 		onProgress: ({ progress }) => {
 			process.stdout.write(`\r[renderer] ${Math.round(progress * 100)}%`);
