@@ -1,11 +1,14 @@
 FROM node:20-slim AS builder
 WORKDIR /app
-COPY worker/package.json worker/tsconfig.json ./worker/
+# Install node_modules at /app so TypeScript can resolve packages for
+# both /app/worker/**/*.ts and /app/lib/*.ts during compilation
+COPY worker/package.json ./package.json
+RUN npm install
+# Copy source tree
 COPY types/ ./types/
 COPY lib/quota.ts lib/youtube-auth.ts lib/youtube-upload.ts ./lib/
+COPY worker/ ./worker/
 WORKDIR /app/worker
-RUN npm install
-COPY worker/ .
 RUN npm run build
 
 FROM node:20-slim
@@ -41,6 +44,6 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /app
 COPY --from=builder /app/worker/dist ./dist
-COPY --from=builder /app/worker/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 
 CMD ["node", "dist/index.js"]
