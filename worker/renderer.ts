@@ -63,7 +63,7 @@ export async function renderShortsVideo(input: {
 		timeoutInMilliseconds: 180_000,
 		// Cap how much decoded video Remotion keeps in memory at once
 		// Default is unlimited — 256MB prevents 4K frames from piling up
-		offthreadVideoCacheSizeInBytes: 256 * 1024 * 1024,
+		offthreadVideoCacheSizeInBytes: 128 * 1024 * 1024,
 		chromiumOptions: {
 			disableWebSecurity: true,
 		},
