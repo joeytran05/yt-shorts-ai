@@ -45,5 +45,8 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 WORKDIR /app
 COPY --from=builder /app/worker/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+# Remotion bundles the video composition at render time using webpack —
+# it needs the original .tsx source files, not the compiled JS output
+COPY --from=builder /app/worker/video ./dist/worker/video
 
 CMD ["node", "dist/worker/index.js"]
