@@ -7,6 +7,9 @@ export type PlanType = "free" | "creator" | "pro";
 export interface User {
 	id: string; // Clerk userId (user_2abc...)
 	email: string | null;
+	plan: PlanType;
+	paddle_customer_id: string | null;
+	paddle_subscription_id: string | null;
 	videos_rendered_this_period: number;
 	period_reset_at: string;
 	created_at: string;

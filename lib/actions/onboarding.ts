@@ -37,6 +37,7 @@ export async function ensureUserExists(): Promise<User> {
 		.insert({
 			id: userId,
 			email,
+			plan: "free",
 			videos_rendered_this_period: 0,
 			period_reset_at: new Date(
 				Date.now() + 30 * 24 * 60 * 60 * 1000,
