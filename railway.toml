@@ -3,6 +3,6 @@ builder        = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand          = "node dist/index.js"
+startCommand          = "node dist/worker/index.js"
 restartPolicyType     = "on_failure"
 restartPolicyMaxRetries = 5
