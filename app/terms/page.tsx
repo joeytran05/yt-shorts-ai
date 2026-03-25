@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Terms of Service — Shortpilot",
-	description: "Terms of Service for Shortpilot",
+	title: "Terms of Service — PilotShorts",
+	description: "Terms of Service for PilotShorts",
 };
 
 export default function TermsPage() {
@@ -33,7 +33,7 @@ export default function TermsPage() {
 							1. Acceptance of Terms
 						</h2>
 						<p>
-							By accessing or using Shortpilot (&quot;Service&quot;)
+							By accessing or using PilotShorts (&quot;Service&quot;)
 							at{" "}
 							<strong className="text-[#dde0f0]">
 								pilotshorts.app
@@ -48,7 +48,7 @@ export default function TermsPage() {
 							2. Description of Service
 						</h2>
 						<p>
-							Shortpilot is an automated YouTube Shorts production
+							PilotShorts is an automated YouTube Shorts production
 							platform. The Service uses artificial intelligence to
 							discover trending content, generate video scripts,
 							synthesize voiceovers, render videos using stock
@@ -88,7 +88,7 @@ export default function TermsPage() {
 						</h2>
 						<p>
 							By connecting your YouTube account, you authorize
-							Shortpilot to upload videos and interact with the
+							PilotShorts to upload videos and interact with the
 							YouTube Data API v3 on your behalf. You agree that:
 						</p>
 						<ul className="list-disc pl-6 mt-3 space-y-2">
@@ -114,7 +114,7 @@ export default function TermsPage() {
 								deceptive
 							</li>
 							<li>
-								Shortpilot is not responsible for any content
+								PilotShorts is not responsible for any content
 								published to YouTube through the Service
 							</li>
 						</ul>
@@ -170,9 +170,9 @@ export default function TermsPage() {
 						</h2>
 						<p>
 							You retain ownership of all content you create using
-							the Service. You grant Shortpilot a limited license
+							the Service. You grant PilotShorts a limited license
 							to process and store your content solely to provide
-							the Service. The Shortpilot platform, branding, and
+							the Service. The PilotShorts platform, branding, and
 							underlying technology remain our exclusive property.
 						</p>
 					</section>
@@ -209,7 +209,7 @@ export default function TermsPage() {
 							11. Limitation of Liability
 						</h2>
 						<p>
-							To the fullest extent permitted by law, Shortpilot
+							To the fullest extent permitted by law, PilotShorts
 							shall not be liable for any indirect, incidental,
 							special, or consequential damages arising from your
 							use of the Service, including loss of revenue,
@@ -267,7 +267,7 @@ export default function TermsPage() {
 						href="/"
 						className="text-sm text-[#52527a] hover:text-[#dde0f0] transition-colors"
 					>
-						← Back to Shortpilot
+						← Back to PilotShorts
 					</Link>
 				</div>
 			</div>

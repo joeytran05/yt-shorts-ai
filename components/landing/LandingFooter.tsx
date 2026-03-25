@@ -24,7 +24,7 @@ export function LandingFooter() {
 
 				{/* Copyright */}
 				<p className="text-xs text-[#52527a]">
-					© {new Date().getFullYear()} Shortpilot. All rights reserved.
+					© {new Date().getFullYear()} PilotShorts. All rights reserved.
 				</p>
 
 				{/* Links */}
@@ -40,6 +40,12 @@ export function LandingFooter() {
 						className="hover:text-[#dde0f0] transition-colors"
 					>
 						Terms
+					</Link>
+					<Link
+						href="/refund"
+						className="hover:text-[#dde0f0] transition-colors"
+					>
+						Refunds
 					</Link>
 					<a
 						href="/dashboard"
