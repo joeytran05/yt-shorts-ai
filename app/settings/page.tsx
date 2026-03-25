@@ -97,10 +97,10 @@ export default async function SettingsPage({ searchParams }: Props) {
 			</div>
 
 			<div className="mt-10 flex flex-col gap-5">
-				{/* <BillingPanel
+				<BillingPanel
 					user={user}
 					rendersUsed={user.videos_rendered_this_period}
-				/> */}
+				/>
 			</div>
 		</main>
 	);
