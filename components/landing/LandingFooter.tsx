@@ -12,16 +12,19 @@ export function LandingFooter() {
 					onClick={() =>
 						window.scrollTo({ top: 0, behavior: "smooth" })
 					}
-					className="font-display text-base font-black tracking-tight"
+					className="flex items-center gap-2"
 				>
-					<span className="text-[#ef4444]">▶</span>
-					SHORTS
-					<span className="text-[#52527a]">.AI</span>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src="/logo-mark.svg" alt="" className="h-6 w-6" />
+					<span className="font-mono text-sm font-bold tracking-tight">
+						<span className="text-[#dde0f0]">SHORT</span>
+						<span className="text-[#ef4444]">PILOT</span>
+					</span>
 				</Link>
 
 				{/* Copyright */}
 				<p className="text-xs text-[#52527a]">
-					© {new Date().getFullYear()} Shorts.AI. All rights reserved.
+					© {new Date().getFullYear()} Shortpilot. All rights reserved.
 				</p>
 
 				{/* Links */}

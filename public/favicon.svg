@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Red rounded phone / Shorts frame -->
+  <rect x="5" y="2" width="22" height="28" rx="5" fill="#e85555"/>
+  <!-- Dark inner screen -->
+  <rect x="8" y="5" width="16" height="22" rx="3" fill="#08080f"/>
+  <!-- White play triangle -->
+  <polygon points="12,10 12,22 22,16" fill="#ffffff"/>
+</svg>

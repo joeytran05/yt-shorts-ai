@@ -18,8 +18,13 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-	title: "Shorts.AI - YT Shorts AI Agent",
-	description: "Automated YouTube Shorts pipeline",
+	title: "Shortpilot — Automated YouTube Shorts",
+	description:
+		"Turn trending ideas into published YouTube Shorts — fully on autopilot. AI scripts, voiceovers, video rendering, and auto-publishing in one pipeline.",
+	icons: {
+		icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+		apple: "/favicon.svg",
+	},
 };
 
 export default function RootLayout({

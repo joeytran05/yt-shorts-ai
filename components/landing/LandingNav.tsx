@@ -29,12 +29,13 @@ export function LandingNav() {
 					onClick={() =>
 						window.scrollTo({ top: 0, behavior: "smooth" })
 					}
-					className="flex items-center gap-1.5 shrink-0"
+					className="flex items-center gap-2 ml-5 shrink-0"
 				>
-					<span className="font-display text-xl font-black tracking-tight">
-						<span className="text-[#ef4444]">▶</span>
-						SHORTS
-						<span className="text-[#52527a]">.AI</span>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src="/logo-mark.svg" alt="" className="h-9 w-9" />
+					<span className="font-mono text-lg font-bold tracking-tight">
+						<span className="text-[#dde0f0]">SHORT</span>
+						<span className="text-[#ef4444]">PILOT</span>
 					</span>
 				</Link>
 
