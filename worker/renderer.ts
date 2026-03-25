@@ -66,14 +66,6 @@ export async function renderShortsVideo(input: {
 		offthreadVideoCacheSizeInBytes: 64 * 1024 * 1024,
 		chromiumOptions: {
 			disableWebSecurity: true,
-			args: [
-				"--no-sandbox",
-				"--disable-gpu",
-				"--disable-dev-shm-usage",
-				"--single-process",
-				"--disable-software-rasterizer",
-				"--js-flags=--max-old-space-size=256",
-			],
 		},
 		onProgress: ({ progress }) => {
 			process.stdout.write(`\r[renderer] ${Math.round(progress * 100)}%`);
