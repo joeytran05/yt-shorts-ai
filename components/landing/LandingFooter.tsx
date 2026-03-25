@@ -29,18 +29,18 @@ export function LandingFooter() {
 
 				{/* Links */}
 				<nav className="flex items-center gap-5 text-xs text-[#52527a]">
-					<a
-						// href="/privacy"
+					<Link
+						href="/privacy"
 						className="hover:text-[#dde0f0] transition-colors"
 					>
 						Privacy
-					</a>
-					<a
-						// href="/terms"
+					</Link>
+					<Link
+						href="/terms"
 						className="hover:text-[#dde0f0] transition-colors"
 					>
 						Terms
-					</a>
+					</Link>
 					<a
 						href="/dashboard"
 						className="hover:text-[#dde0f0] transition-colors"
