@@ -2,6 +2,7 @@ FROM node:20-slim AS builder
 WORKDIR /app
 COPY worker/package.json worker/tsconfig.json ./worker/
 COPY types/ ./types/
+COPY lib/quota.ts lib/youtube-auth.ts lib/youtube-upload.ts ./lib/
 WORKDIR /app/worker
 RUN npm install
 COPY worker/ .

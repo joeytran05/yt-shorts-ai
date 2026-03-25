@@ -10,8 +10,8 @@
 		"resolveJsonModule": true,
 		"jsx": "react",
 		"baseUrl": ".",
-		"paths": { "@/*": ["../src/*"] }
+		"paths": { "@/*": ["../*"] }
 	},
-	"include": ["./**/*.ts", "./**/*.tsx", "../src/types/**/*.ts"],
+	"include": ["./**/*.ts", "./**/*.tsx", "../types/**/*.ts"],
 	"exclude": ["node_modules", "dist"]
 }
