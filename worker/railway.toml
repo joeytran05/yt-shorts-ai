@@ -1,7 +1,8 @@
 [build]
-builder        = "nixpacks"
+builder        = "dockerfile"
+dockerfilePath = "worker/Dockerfile"
 
 [deploy]
-startCommand          = "npm run build && node dist/index.js"
+startCommand          = "node dist/index.js"
 restartPolicyType     = "on_failure"
 restartPolicyMaxRetries = 5
