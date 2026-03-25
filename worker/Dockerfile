@@ -1,7 +1,7 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 COPY worker/package.json worker/tsconfig.json ./worker/
-COPY src/types/ ./src/types/
+COPY types/ ./types/
 WORKDIR /app/worker
 RUN npm install
 COPY worker/ .
@@ -11,7 +11,7 @@ FROM node:20-slim
 
 RUN apt-get update && apt-get install -y \
     chromium \
-    ffmpeg \                          
+    ffmpeg \
     fonts-liberation \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
@@ -41,6 +41,5 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 WORKDIR /app
 COPY --from=builder /app/worker/dist ./dist
 COPY --from=builder /app/worker/node_modules ./node_modules
-COPY src/types/ ./src/types/
 
 CMD ["node", "dist/index.js"]
