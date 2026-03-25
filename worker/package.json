@@ -9,6 +9,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "^3.0.41",
+		"dotenv": "^16.5.0",
 		"@remotion/bundler": "^4.0.434",
 		"@remotion/captions": "^4.0.434",
 		"@remotion/media": "^4.0.434",
