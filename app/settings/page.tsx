@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { GeneralSettings } from "@/components/GeneralSettings";
 import { MusicLibrary } from "@/components/MusicLibrary";
 import { QueryManager } from "@/components/QueryManager";

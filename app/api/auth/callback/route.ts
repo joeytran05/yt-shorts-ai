@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req: NextRequest) {
 	const code = req.nextUrl.searchParams.get("code");
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
 			yt_channel_thumbnail:
 				channelItem?.snippet?.thumbnails?.default?.url ?? null,
 		},
-		{ onConflict: "user_id" },
+		{ onConflict: "user_id,yt_channel_id" },
 	);
 
 	if (channelError) {
@@ -69,6 +70,8 @@ export async function GET(req: NextRequest) {
 			`${origin}/settings?channel_error=${encodeURIComponent(channelError.message)}`,
 		);
 	}
+
+	revalidatePath("/settings");
 
 	// Redirect back to settings with a success indicator
 	const origin = req.nextUrl.origin;
