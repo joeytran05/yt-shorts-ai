@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Privacy Policy — Shortpilot",
-	description: "Privacy Policy for Shortpilot",
+	title: "Privacy Policy — PilotShorts",
+	description: "Privacy Policy for PilotShorts",
 };
 
 export default function PrivacyPage() {
@@ -33,8 +33,8 @@ export default function PrivacyPage() {
 							1. Introduction
 						</h2>
 						<p>
-							Shortpilot (&quot;we&quot;, &quot;our&quot;, or
-							&quot;us&quot;) operates the Shortpilot web
+							PilotShorts (&quot;we&quot;, &quot;our&quot;, or
+							&quot;us&quot;) operates the PilotShorts web
 							application located at{" "}
 							<strong className="text-[#dde0f0]">
 								pilotshorts.app
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
 							4. YouTube API Services
 						</h2>
 						<p>
-							Shortpilot uses the{" "}
+							PilotShorts uses the{" "}
 							<strong className="text-[#dde0f0]">
 								YouTube Data API v3
 							</strong>{" "}
@@ -144,7 +144,7 @@ export default function PrivacyPage() {
 							, including the Limited Use requirements.
 						</p>
 						<p className="mt-3">
-							You can revoke Shortpilot&apos;s access to your
+							You can revoke PilotShorts&apos;s access to your
 							YouTube account at any time via your{" "}
 							<a
 								href="https://myaccount.google.com/permissions"
@@ -256,7 +256,7 @@ export default function PrivacyPage() {
 						href="/"
 						className="text-sm text-[#52527a] hover:text-[#dde0f0] transition-colors"
 					>
-						← Back to Shortpilot
+						← Back to PilotShorts
 					</Link>
 				</div>
 			</div>
