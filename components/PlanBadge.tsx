@@ -1,4 +1,5 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
+import { getUser } from "@/lib/supabase";
 
 const COLORS: Record<string, string> = {
 	free: "text-muted border-border",
@@ -14,12 +15,10 @@ const LABELS: Record<string, string> = {
 
 export async function PlanBadge() {
 	const { userId } = await auth();
-	const client = await clerkClient();
 	if (!userId) return null;
 
-	const subscription =
-		await client.billing.getUserBillingSubscription(userId);
-	const slug = subscription?.subscriptionItems[0]?.plan?.slug || "free";
+	const user = await getUser(userId);
+	const slug = user?.plan ?? "free";
 
 	return (
 		<span
