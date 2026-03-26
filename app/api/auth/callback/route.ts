@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 export async function GET(req: NextRequest) {
 	const code = req.nextUrl.searchParams.get("code");
 	const userId = req.nextUrl.searchParams.get("state") ?? "";
+	const origin = req.nextUrl.origin;
 
 	if (!code) return NextResponse.json({ error: "No code" }, { status: 400 });
 	if (!userId)
@@ -25,24 +26,26 @@ export async function GET(req: NextRequest) {
 	const tokenData = await tokenRes.json();
 
 	if (!tokenData.refresh_token) {
-		return NextResponse.json({
-			error: "No refresh token received",
-			hint: "Make sure prompt=consent is set and you are a test user",
-			data: tokenData,
-		});
+		console.error("[youtube-callback] No refresh token:", tokenData);
+		return NextResponse.redirect(
+			`${origin}/settings?channel_error=${encodeURIComponent(
+				"No refresh token received. Try disconnecting and reconnecting.",
+			)}`,
+		);
 	}
 
 	// Fetch the YouTube channel info to get the channel name + thumbnail
 	const channelRes = await fetch(
 		"https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
-		{
-			headers: {
-				Authorization: `Bearer ${tokenData.access_token}`,
-			},
-		},
+		{ headers: { Authorization: `Bearer ${tokenData.access_token}` } },
 	);
 	const channelData = await channelRes.json();
 	const channelItem = channelData?.items?.[0];
+	const ytChannelId = channelItem?.id ?? null;
+
+	console.log("[youtube-callback] userId:", userId);
+	console.log("[youtube-callback] yt_channel_id:", ytChannelId);
+	console.log("[youtube-callback] yt_channel_name:", channelItem?.snippet?.title);
 
 	const db = createClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,30 +53,51 @@ export async function GET(req: NextRequest) {
 		{ auth: { persistSession: false } },
 	);
 
-	const { error: channelError } = await db.from("channels").upsert(
-		{
+	// Check if this user already has this YouTube channel connected
+	const { data: existing } = await db
+		.from("channels")
+		.select("id")
+		.eq("user_id", userId)
+		.eq("yt_channel_id", ytChannelId)
+		.maybeSingle();
+
+	let channelError: { message: string } | null = null;
+
+	if (existing) {
+		// Update existing row (refresh token may have changed)
+		const { error } = await db
+			.from("channels")
+			.update({
+				name: channelItem?.snippet?.title ?? "My Channel",
+				refresh_token: tokenData.refresh_token,
+				yt_channel_name: channelItem?.snippet?.title ?? null,
+				yt_channel_thumbnail:
+					channelItem?.snippet?.thumbnails?.default?.url ?? null,
+			})
+			.eq("id", existing.id);
+		if (error) channelError = error;
+	} else {
+		// Insert new channel for this user
+		const { error } = await db.from("channels").insert({
 			user_id: userId,
 			name: channelItem?.snippet?.title ?? "My Channel",
 			refresh_token: tokenData.refresh_token,
-			yt_channel_id: channelItem?.id ?? null,
+			yt_channel_id: ytChannelId,
 			yt_channel_name: channelItem?.snippet?.title ?? null,
 			yt_channel_thumbnail:
 				channelItem?.snippet?.thumbnails?.default?.url ?? null,
-		},
-		{ onConflict: "user_id,yt_channel_id" },
-	);
+		});
+		if (error) channelError = error;
+	}
 
 	if (channelError) {
-		console.error("Failed to save channel:", channelError);
-		const origin = req.nextUrl.origin;
+		console.error("[youtube-callback] DB error:", channelError);
 		return NextResponse.redirect(
 			`${origin}/settings?channel_error=${encodeURIComponent(channelError.message)}`,
 		);
 	}
 
+	console.log("[youtube-callback] Channel saved successfully for user:", userId);
 	revalidatePath("/settings");
-
-	// Redirect back to settings with a success indicator
-	const origin = req.nextUrl.origin;
 	return NextResponse.redirect(`${origin}/settings?channel_connected=1`);
 }

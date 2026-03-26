@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, Youtube, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toastMessage } from "@/lib/utils";
@@ -24,8 +25,21 @@ export function ChannelManager({
 	channelConnected,
 	channelError,
 }: Props) {
+	const router = useRouter();
 	const [channels, setChannels] = useState(initial);
 	const [isPending, startTransition] = useTransition();
+
+	// Sync local state whenever the server passes fresh data (e.g. after OAuth redirect)
+	useEffect(() => {
+		setChannels(initial);
+	}, [initial]);
+
+	// Force a server re-fetch when the OAuth callback flag is present
+	useEffect(() => {
+		if (channelConnected) {
+			router.refresh();
+		}
+	}, [channelConnected, router]);
 
 	const limit = PLAN_LIMITS[userPlan].channels;
 	const canAddMore = channels.length < limit;
