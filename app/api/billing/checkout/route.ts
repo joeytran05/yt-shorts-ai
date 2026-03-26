@@ -58,7 +58,8 @@ export async function GET(req: NextRequest) {
 			...(email ? { customer: { email } } : {}),
 		});
 
-		const checkoutUrl = `https://buy.paddle.com/checkout/${transaction.id}`;
+		const isSandbox = process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox";
+		const checkoutUrl = `https://${isSandbox ? "sandbox-buy" : "buy"}.paddle.com/checkout/${transaction.id}`;
 		console.log("[checkout] Redirecting to:", checkoutUrl);
 		return NextResponse.redirect(checkoutUrl);
 

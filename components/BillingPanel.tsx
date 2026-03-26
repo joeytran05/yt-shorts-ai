@@ -189,26 +189,26 @@ export function BillingPanel({ user, rendersUsed }: Props) {
 							{/* CTA */}
 							{isCurrent ? (
 								slug !== "free" ? (
-									<Link
+									<a
 										href="/api/billing/checkout?manage=1"
 										className="w-full py-2 rounded-xl text-xs font-bold text-center border border-border text-muted hover:bg-dim transition-colors mb-5 block"
 									>
 										Manage subscription →
-									</Link>
+									</a>
 								) : (
 									<div className="w-full py-2 rounded-xl text-xs font-bold text-center border border-border text-muted mb-5 cursor-default">
 										Current plan
 									</div>
 								)
 							) : isDowngrade ? (
-								<Link
+								<a
 									href="/api/billing/checkout?manage=1"
 									className="w-full py-2 rounded-xl text-xs font-bold text-center border border-border text-muted/50 hover:bg-dim transition-colors mb-5 block"
 								>
 									Manage subscription →
-								</Link>
+								</a>
 							) : (
-								<Link
+								<a
 									href={`/api/billing/checkout?plan=${plan.checkoutPlan}`}
 									className={`w-full py-2 rounded-xl text-xs font-bold text-center transition-all mb-5 block ${
 										plan.popular
@@ -217,7 +217,7 @@ export function BillingPanel({ user, rendersUsed }: Props) {
 									}`}
 								>
 									Upgrade to {plan.name} →
-								</Link>
+								</a>
 							)}
 
 							{/* Feature list */}
