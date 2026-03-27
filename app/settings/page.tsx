@@ -4,7 +4,8 @@ import { GeneralSettings } from "@/components/GeneralSettings";
 import { MusicLibrary } from "@/components/MusicLibrary";
 import { QueryManager } from "@/components/QueryManager";
 import { ChannelManager } from "@/components/ChannelManager";
-import { BillingPanel } from "@/components/BillingPanel";
+// TODO: swap back to BillingPanel once Paddle verification is complete
+import { BillingComingSoonPanel as BillingPanel } from "@/components/BillingComingSoonPanel";
 import { FeatureLock } from "@/components/FeatureLock";
 import { RestartTutorialButton } from "@/components/RestartTutorialButton";
 import { Button } from "@/components/ui/button";
