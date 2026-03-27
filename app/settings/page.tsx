@@ -16,6 +16,7 @@ import { ensureUserExists } from "@/lib/actions/onboarding";
 import { getAuthContext } from "@/lib/auth";
 import { PLAN_LIMITS } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
+import { getSubscriptionInterests } from "@/lib/actions/billing";
 
 interface Props {
 	searchParams: Promise<{
@@ -36,10 +37,11 @@ export default async function SettingsPage({ searchParams }: Props) {
 		getAuthContext(),
 	]);
 
-	const [settings, tracks, channelsResult] = await Promise.all([
+	const [settings, tracks, channelsResult, notifiedPlans] = await Promise.all([
 		getSettings(user.id),
 		getMusicTracksForUser(user.id),
 		getChannels(),
+		getSubscriptionInterests(),
 	]);
 
 	return (
@@ -103,6 +105,7 @@ export default async function SettingsPage({ searchParams }: Props) {
 				<BillingPanel
 					user={user}
 					rendersUsed={user.videos_rendered_this_period}
+					initialNotified={notifiedPlans}
 				/>
 			</div>
 		</main>

@@ -13,6 +13,7 @@ import { expressSubscriptionInterest } from "@/lib/actions/billing";
 interface Props {
 	user: User;
 	rendersUsed: number;
+	initialNotified?: string[];
 }
 
 const PLANS: {
@@ -85,7 +86,7 @@ function Check({ included }: { included: boolean }) {
 	);
 }
 
-export function BillingComingSoonPanel({ user, rendersUsed }: Props) {
+export function BillingComingSoonPanel({ user, rendersUsed, initialNotified = [] }: Props) {
 	const slug = (user.plan ?? "free") as PlanType;
 	const limit = PLAN_LIMITS[slug]?.rendersPerMonth ?? 3;
 	const limitLabel = limit === Infinity ? "∞" : String(limit);
@@ -102,7 +103,9 @@ export function BillingComingSoonPanel({ user, rendersUsed }: Props) {
 			? "#f59e0b"
 			: "var(--publish)";
 
-	const [notified, setNotified] = useState<Record<string, boolean>>({});
+	const [notified, setNotified] = useState<Record<string, boolean>>(
+		() => Object.fromEntries(initialNotified.map((p) => [p, true])),
+	);
 	const [pending, setPending] = useState<Record<string, boolean>>({});
 
 	const handleNotify = async (planId: string) => {

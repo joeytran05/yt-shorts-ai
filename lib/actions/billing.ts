@@ -34,3 +34,16 @@ export async function expressSubscriptionInterest(
 		return { ok: false };
 	}
 }
+
+export async function getSubscriptionInterests(): Promise<string[]> {
+	try {
+		const { userId } = await getAuthContext();
+		const { data } = await db
+			.from("subscription_interest")
+			.select("plan")
+			.eq("user_id", userId);
+		return (data ?? []).map((r: { plan: string }) => r.plan);
+	} catch {
+		return [];
+	}
+}
