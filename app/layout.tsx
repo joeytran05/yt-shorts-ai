@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { DM_Mono, Syne } from "next/font/google";
 import { ClerkProvider, Show } from "@clerk/nextjs";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { Analytics } from "@vercel/analytics/next";
 
 const dmMono = DM_Mono({
 	subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
 						<TutorialOverlay />
 					</Show>
 				</ClerkProvider>
+				<Analytics />
 			</body>
 		</html>
 	);
